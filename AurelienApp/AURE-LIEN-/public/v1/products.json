@@ -1,0 +1,326 @@
+{
+  "products": [
+    {
+      "_id": "p-jc-003",
+      "name": "Wool-Blend Trench Coat",
+      "category": "jackets-coats",
+      "price": 1500,
+      "images": ["/uploads/whitejacket.jpg", "/uploads/peig_leather_jacket.jpg"],
+      "size": ["M", "L", "XL"],
+      "description": "A modern trench with a tailored shoulder.",
+      "colors": ["cream"],
+      "badge": "Editorial Pick",
+      "featured": true
+    },
+    {
+      "_id": "p-jc-007",
+      "name": "Navy Embroidered Bomber",
+      "category": "jackets-coats",
+      "price": 1000,
+      "images": ["/uploads/italian_jacket3.jpg", "/uploads/italian_jacket.jpg", "/uploads/italian_jacket2.jpg"],
+      "size": ["M", "L", "XL"],
+      "description": "Navy Embroidered Bomber",
+      "colors": ["camel", "navy"],
+      "badge": "Best Seller",
+      "featured": true
+    },
+    {
+      "_id": "p-jc-011",
+      "name": "Urban Brown Leather Jacket",
+      "category": "jackets-coats",
+      "price": 1500,
+      "images": ["/uploads/brownleather2.jpg", "/uploads/brown_wind_jacket.jpg"],
+      "size": ["M", "L", "XL"],
+      "description": "Urban Brown Leather Jacket",
+      "colors": ["brown"],
+      "badge": "New Arrival",
+      "featured": true
+    },
+    {
+      "_id": "p-jc-012",
+      "name": "Dark Urban Bomber Jacket",
+      "category": "jackets-coats",
+      "price": 1500,
+      "images": ["/uploads/black.jpg", "/uploads/black_wind_jacket.jpg"],
+      "size": ["M", "L", "XL"],
+      "description": "Dark Urban Bomber Jacket",
+      "colors": ["black"]
+    },
+    {
+      "_id": "p-jc-014",
+      "name": "Gray Urban Bomber Jacket",
+      "category": "jackets-coats",
+      "price": 1500,
+      "images": ["/uploads/greyjacket.jpg", "/uploads/greyjacket2.jpg"],
+      "size": ["M", "L", "XL"],
+      "description": "Gray Urban Bomber Jacket",
+      "colors": ["gray"]
+    },
+    {
+      "_id": "p-jc-016",
+      "name": "Cream Geometric Quilted Shacket",
+      "category": "jackets-coats",
+      "price": 1470,
+      "discount": 40,
+      "images": ["/uploads/Cream Geometric Quilted Shacket.jpg"],
+      "size": ["M", "L", "XL", "2XL"],
+      "description": "Cream quilted shacket with a geometric matelasse pattern.",
+      "colors": ["cream", "gray"],
+      "featured": true
+    },
+    {
+      "_id": "p-jc-017",
+      "name": "Cream Zip-Up Harrington Jacket",
+      "category": "jackets-coats",
+      "price": 1470,
+      "images": ["/uploads/Cream Zip-Up Harrington Jacket.jpg"],
+      "size": ["M", "L", "XL", "2XL"],
+      "description": "Minimal cream harrington jacket with a clean zip-front profile.",
+      "colors": ["cream"]
+    },
+    {
+      "_id": "p-jc-018",
+      "name": "Textured Waffle-Knit Zip Jacket",
+      "category": "jackets-coats",
+      "price": 1200,
+      "images": ["/uploads/Textured Waffle-Knit Zip Jacket.jpg"],
+      "size": ["M", "L", "XL", "2XL"],
+      "description": "Lightweight zip jacket in a cream waffle-knit texture.",
+      "colors": ["cream"]
+    },
+    {
+      "_id": "p-su-001",
+      "name": "Minimal Cream Street Set",
+      "category": "suits",
+      "price": 2149,
+      "images": ["/uploads/whitesuit.jpg", "/uploads/peig_suit2.jpg"],
+      "size": ["38", "40", "42", "44"],
+      "description": "Minimal Cream Street Set",
+      "colors": ["cream"],
+      "featured": true
+    },
+    {
+      "_id": "p-su-003",
+      "name": "Mocha Casual Street Set",
+      "category": "suits",
+      "price": 2149,
+      "images": ["/uploads/brownsuit.jpg", "/uploads/brown_suit.jpg"],
+      "size": ["38", "40", "42"],
+      "description": "Mocha Casual Street Set",
+      "colors": ["mocha"]
+    },
+    {
+      "_id": "p-sh-003",
+      "name": "Black & White Striped Polo Sweater",
+      "category": "shirts",
+      "price": 1080,
+      "images": ["/uploads/Black & White Striped Polo Sweater.jpg"],
+      "size": ["M", "L", "XL", "2XL"],
+      "description": "Striped rib-knit polo sweater in black and white.",
+      "colors": ["black", "white"],
+      "featured": true
+    },
+    {
+      "_id": "p-sh-004",
+      "name": "Cream Polo Collar Sweatshirt",
+      "category": "shirts",
+      "price": 1470,
+      "images": ["/uploads/Cream Polo Collar Sweatshirt.jpg"],
+      "size": ["M", "L", "XL", "2XL"],
+      "description": "Relaxed cream sweatshirt finished with a polo collar.",
+      "colors": ["cream"]
+    },
+    {
+      "_id": "p-sh-005",
+      "name": "Poker Face Tan Ribbed Polo",
+      "category": "shirts",
+      "price": 680,
+      "images": ["/uploads/Poker Face Tan Ribbed Polo.jpg"],
+      "size": ["M", "L", "XL", "2XL"],
+      "description": "Tan ribbed polo with a clean open-collar neckline.",
+      "colors": ["tan"]
+    },
+    {
+      "_id": "p-kn-001",
+      "name": "Dark Charcoal Chenille Turtleneck",
+      "category": "knitwear",
+      "price": 870,
+      "images": ["/uploads/Dark Charcoal Chenille Turtleneck.jpg"],
+      "size": ["M", "L", "XL", "2XL"],
+      "description": "Soft chenille turtleneck in a dark charcoal tone.",
+      "colors": ["charcoal"],
+      "featured": true
+    },
+    {
+      "_id": "p-kn-002",
+      "name": "Balenciaga Gradient Logo Sweater",
+      "category": "knitwear",
+      "price": 1200,
+      "images": ["/uploads/Balenciaga Gradient Logo Sweater.jpg"],
+      "size": ["M", "L", "XL", "2XL"],
+      "description": "Brown-to-camel gradient sweater with tonal Balenciaga branding.",
+      "colors": ["brown", "camel"]
+    },
+    {
+      "_id": "p-kn-003",
+      "name": "Beige Essential Rib-Knit Sweater",
+      "category": "knitwear",
+      "price": 870,
+      "images": ["/uploads/Beige Essential Rib-Knit Sweater.jpg"],
+      "size": ["M"],
+      "description": "Beige rib-knit sweater with contrast tipped trim.",
+      "colors": ["beige", "white"]
+    },
+    {
+      "_id": "p-kn-004",
+      "name": "Charcoal Quarter-Zip Pullover",
+      "category": "knitwear",
+      "price": 870,
+      "images": ["/uploads/Charcoal Quarter-Zip Pullover.jpg"],
+      "size": ["M", "L", "XL", "2XL"],
+      "description": "Charcoal pullover with a clean quarter-zip neckline.",
+      "colors": ["charcoal"]
+    },
+    {
+      "_id": "p-kn-005",
+      "name": "Essential Turtleneck Sweater (Ivory)",
+      "category": "knitwear",
+      "price": 680,
+      "images": ["/uploads/Essential Turtleneck Sweater (Ivory).jpg"],
+      "size": ["M", "L", "XL", "2XL"],
+      "description": "Essential ivory turtleneck sweater with a clean minimalist finish.",
+      "colors": ["cream"]
+    },
+    {
+      "_id": "p-kn-006",
+      "name": "Tommy Hilfiger Striped Hoodie (Tan:Brown)",
+      "category": "knitwear",
+      "price": 870,
+      "images": ["/uploads/Tommy Hilfiger Striped Hoodie (Tan:Brown).jpg"],
+      "size": ["M", "L", "XL", "2XL"],
+      "description": "Striped knit hoodie in tan, brown, and white.",
+      "colors": ["tan", "brown", "white"]
+    },
+    {
+      "_id": "p-denim-001",
+      "name": "Classic Blue Denim Jeans (Pull & Bear)",
+      "category": "denim",
+      "price": 1155,
+      "images": ["/uploads/Classic Blue Denim Jeans (Pull & Bear).jpg"],
+      "size": ["30", "32", "34", "36", "38"],
+      "description": "Classic blue denim jeans in a relaxed straight fit.",
+      "colors": ["blue"]
+    },
+    {
+      "_id": "p-denim-002",
+      "name": "Dark Indigo Denim Jeans",
+      "category": "denim",
+      "price": 1155,
+      "images": ["/uploads/Dark Indigo Denim Jeans.jpg"],
+      "size": ["30", "32", "34", "36", "38"],
+      "description": "Dark indigo denim jeans with a clean tapered line.",
+      "colors": ["indigo"]
+    },
+    {
+      "_id": "p-denim-003",
+      "name": "Levi's Classic Blue Jeans",
+      "category": "denim",
+      "price": 1155,
+      "images": ["/uploads/Levi's Classic Blue Jeans.jpg"],
+      "size": ["30", "32", "34", "36", "38"],
+      "description": "Classic blue Levi's jeans for everyday wear.",
+      "colors": ["blue"]
+    },
+    {
+      "_id": "p-denim-004",
+      "name": "Light Wash Vintage Denim (Pull & Bear)",
+      "category": "denim",
+      "price": 1155,
+      "images": ["/uploads/Light Wash Vintage Denim (Pull & Bear).jpg"],
+      "size": ["30", "32", "34", "36", "38"],
+      "description": "Light wash vintage denim with a relaxed cropped fit.",
+      "colors": ["blue"]
+    },
+    {
+      "_id": "p-denim-005",
+      "name": "Medium Wash Levi's Cropped Jeans",
+      "category": "denim",
+      "price": 700,
+      "images": ["/uploads/Medium Wash Levi's Cropped Jeans.jpg"],
+      "size": ["30", "32", "34", "36", "38"],
+      "description": "Medium wash cropped Levi's jeans with a classic five-pocket shape.",
+      "colors": ["blue"]
+    },
+    {
+      "_id": "p-korean-001",
+      "name": "Camo Wool Trousers (Gray)",
+      "category": "korean",
+      "price": 1200,
+      "images": ["/uploads/Camo Wool Trousers (Gray).jpg"],
+      "size": ["M", "L", "XL", "2XL"],
+      "description": "Gray wool trousers with a cropped modern silhouette.",
+      "colors": ["gray"]
+    },
+    {
+      "_id": "p-korean-002",
+      "name": "Black Elastic-Waist Trousers",
+      "category": "korean",
+      "price": 1080,
+      "images": ["/uploads/Black Elastic-Waist Trousers.jpg"],
+      "size": ["M", "L", "XL", "2XL"],
+      "description": "Relaxed black trousers with an elasticated back waist.",
+      "colors": ["black"]
+    },
+    {
+      "_id": "p-korean-003",
+      "name": "Diesel Elastic-Back Chino (Cream)",
+      "category": "korean",
+      "price": 1100,
+      "images": ["/uploads/Diesel Elastic-Back Chino (Cream).jpg"],
+      "size": ["M", "L", "XL", "2XL"],
+      "description": "Cream chino with a structured straight leg and elastic-back waist.",
+      "colors": ["cream"]
+    },
+    {
+      "_id": "p-korean-004",
+      "name": "Diesel Stretch Chino (Beige)",
+      "category": "korean",
+      "price": 1100,
+      "images": ["/uploads/Diesel Stretch Chino (Beige).jpg"],
+      "size": ["M", "L", "XL", "2XL"],
+      "description": "Beige stretch chino with a tapered easy-wear fit.",
+      "colors": ["beige"]
+    },
+    {
+      "_id": "p-baggy-001",
+      "name": "Black Tapered Cargo Pants",
+      "category": "jeans",
+      "price": 1200,
+      "images": ["/uploads/Black Tapered Cargo Pants.jpg"],
+      "size": ["M", "L", "XL", "2XL"],
+      "description": "Tapered black cargo pants with adjustable hems.",
+      "colors": ["black"]
+    },
+    {
+      "_id": "p-baggy-002",
+      "name": "Ribbed Cargo Knit Pant (Cream)",
+      "category": "jeans",
+      "price": 1200,
+      "images": ["/uploads/Ribbed Cargo Knit Pant (Cream).jpg"],
+      "size": ["M"],
+      "description": "Cream ribbed knit pants with oversized cargo pockets.",
+      "colors": ["cream"]
+    },
+    {
+      "_id": "p-baggy-003",
+      "name": "Medium Wash Cargo Denim Jeans",
+      "category": "jeans",
+      "price": 1155,
+      "images": ["/uploads/Medium Wash Cargo Denim Jeans.jpg"],
+      "size": ["30", "32", "34", "36", "38"],
+      "description": "Medium wash denim jeans with utility cargo paneling.",
+      "colors": ["blue"],
+      "featured": true
+    }
+  ]
+}

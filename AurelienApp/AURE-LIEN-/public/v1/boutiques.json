@@ -1,0 +1,36 @@
+{
+  "boutiques": [
+    {
+      "id": "zamalek-house",
+      "name": "Zamalek House",
+      "area": "Zamalek",
+      "governorate": "Cairo",
+      "dispatchNote": "Same-day dispatch window",
+      "coordinate": { "latitude": 30.0626, "longitude": 31.2197 }
+    },
+    {
+      "id": "heliopolis-room",
+      "name": "Heliopolis Room",
+      "area": "Heliopolis",
+      "governorate": "Cairo",
+      "dispatchNote": "Curated eveningwear edit",
+      "coordinate": { "latitude": 30.0912, "longitude": 31.33 }
+    },
+    {
+      "id": "sheikh-zayed-edit",
+      "name": "Sheikh Zayed Edit",
+      "area": "Sheikh Zayed",
+      "governorate": "Giza",
+      "dispatchNote": "Express delivery eligible",
+      "coordinate": { "latitude": 30.0107, "longitude": 30.9722 }
+    },
+    {
+      "id": "alex-seafront",
+      "name": "Alex Seafront",
+      "area": "Sidi Gaber",
+      "governorate": "Alexandria",
+      "dispatchNote": "Tracked next-day handoff",
+      "coordinate": { "latitude": 31.2336, "longitude": 29.9489 }
+    }
+  ]
+}

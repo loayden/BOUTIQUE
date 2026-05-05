@@ -1,0 +1,98 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #f5f1e8;
+  --background-top: #fff9ef;
+  --background-bottom: #ede3d6;
+  --foreground: #3d3025;
+  --foreground-soft: #6f6254;
+  --accent: #a87935;
+  --accent-text: #7a581f;
+  --border-warm: rgba(123, 103, 82, 0.18);
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html {
+  /* Prevent zoom on iOS input focus */
+  -webkit-text-size-adjust: 100%;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  /* Use dvh for mobile viewport units with fallback */
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+body {
+  background:
+    linear-gradient(180deg, var(--background-top) 0%, var(--background) 46%, var(--background-bottom) 100%);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Responsive images */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Fluid container utilities */
+.container-fluid {
+  width: 100%;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .container-fluid {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container-fluid {
+    max-width: 1200px;
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+/* Prevent horizontal overflow on mobile */
+main {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+section,
+article {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 640px;
+}
+
+/* iOS safe area support */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}

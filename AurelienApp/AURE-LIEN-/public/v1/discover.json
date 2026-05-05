@@ -1,0 +1,99 @@
+{
+  "feed": [
+    {
+      "id": "feed-outerwear-evening",
+      "creatorId": "boutique-editorial",
+      "creatorName": "BOUTIQUE Editorial",
+      "title": "Tailored outerwear for cool evenings",
+      "caption": "Layer a wool trench over cream tailoring, then balance the look with a quieter knit foundation.",
+      "score": 92,
+      "productIds": ["p-jc-003", "p-su-001", "p-kn-005"]
+    },
+    {
+      "id": "feed-city-bomber",
+      "creatorId": "boutique-styling-desk",
+      "creatorName": "BOUTIQUE Styling Desk",
+      "title": "Bomber-led city uniform",
+      "caption": "Dark bombers, baggy denim, and structured knitwear keep the silhouette modern without overworking the palette.",
+      "score": 88,
+      "productIds": ["p-jc-012", "p-baggy-003", "p-kn-004"]
+    },
+    {
+      "id": "feed-weekend-knit",
+      "creatorId": "boutique-catalog-team",
+      "creatorName": "BOUTIQUE Catalog Team",
+      "title": "Weekend knit layers",
+      "caption": "Build around tactile cream layers and relaxed trousers for a softer boutique delivery edit.",
+      "score": 86,
+      "productIds": ["p-jc-018", "p-sh-004", "p-korean-003"]
+    }
+  ],
+  "drops": [
+    {
+      "id": "drop-camel-outerwear",
+      "name": "Camel Outerwear Capsule",
+      "copy": "A compact outerwear drop built around bomber and trench silhouettes with quicker Cairo dispatch.",
+      "stock": 11,
+      "unlocksAt": "2026-04-27T18:00:00.000Z"
+    },
+    {
+      "id": "drop-knit-reset",
+      "name": "Knitwear Reset",
+      "copy": "Neutral knit layers released in a limited-size run for weekend delivery windows.",
+      "stock": 8,
+      "unlocksAt": "2026-04-28T12:00:00.000Z"
+    }
+  ],
+  "challenges": [
+    {
+      "id": "challenge-quiet-luxury",
+      "title": "Quiet Luxury Layering",
+      "prompt": "Build a three-piece outfit using one coat or jacket, one knit, and one trouser.",
+      "rewardPoints": 25
+    },
+    {
+      "id": "challenge-monochrome",
+      "title": "Monochrome Delivery Edit",
+      "prompt": "Use one dominant neutral tone and keep contrast in texture rather than color.",
+      "rewardPoints": 20
+    },
+    {
+      "id": "challenge-weekend",
+      "title": "Weekend Boutique Uniform",
+      "prompt": "Create a relaxed off-duty fit that still feels premium and camera-ready.",
+      "rewardPoints": 20
+    }
+  ],
+  "leaderboard": [],
+  "subscriptionPlans": [
+    {
+      "id": "plan-monthly-core",
+      "title": "Monthly Core Edit",
+      "interval": "Monthly",
+      "price": 799,
+      "currency": "EGP",
+      "details": "A monthly boutique selection built around current fit and palette preferences."
+    },
+    {
+      "id": "plan-quarterly-signature",
+      "title": "Quarterly Signature Box",
+      "interval": "Quarterly",
+      "price": 2199,
+      "currency": "EGP",
+      "details": "Higher-value outerwear and tailoring selections with seasonal styling support."
+    },
+    {
+      "id": "plan-vip-concierge",
+      "title": "VIP Concierge",
+      "interval": "Monthly",
+      "price": 3499,
+      "currency": "EGP",
+      "details": "Priority stylist response, premium curation, and concierge-backed delivery planning."
+    }
+  ],
+  "defaultStyleDNA": {
+    "style": "Minimal Tailored",
+    "palette": "Neutrals",
+    "fit": "Regular"
+  }
+}

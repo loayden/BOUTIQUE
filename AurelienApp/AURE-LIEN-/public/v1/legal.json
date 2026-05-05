@@ -1,0 +1,73 @@
+{
+  "documents": [
+    {
+      "id": "terms",
+      "title": "Terms of Service",
+      "intro": "These terms govern access to BOUTIQUE, order placement, boutique inventory availability, and account obligations.",
+      "sections": [
+        {
+          "id": "terms-access",
+          "heading": "Store Access",
+          "body": [
+            "BOUTIQUE publishes boutique inventory and delivery availability on a rolling basis. Availability can change before order confirmation if stock is exhausted or inventory is being reconciled.",
+            "Clients are responsible for maintaining accurate contact, address, and checkout details so order handling is not delayed."
+          ]
+        },
+        {
+          "id": "terms-orders",
+          "heading": "Orders",
+          "body": [
+            "Orders are only confirmed after payment authorization or cash-on-delivery validation is completed.",
+            "If an item becomes unavailable before confirmation, BOUTIQUE may cancel or partially adjust the order and notify the client through the app."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "privacy",
+      "title": "Privacy Policy",
+      "intro": "BOUTIQUE processes account, order, delivery, and support information to operate the marketplace and support the client relationship.",
+      "sections": [
+        {
+          "id": "privacy-data",
+          "heading": "Data Usage",
+          "body": [
+            "Profile, order, and address information is used to fulfill purchases, maintain account records, and support logistics operations.",
+            "Photos submitted for discovery features are used only to return styling results and improve the in-app experience."
+          ]
+        },
+        {
+          "id": "privacy-security",
+          "heading": "Security",
+          "body": [
+            "BOUTIQUE does not store raw card numbers in the mobile app or in backend order records.",
+            "Access to admin views and operational dashboards is limited to authorized staff accounts."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "storefront-policy",
+      "title": "Storefront Policy",
+      "intro": "This policy defines pricing display, delivery communication, and post-purchase support commitments across the storefront.",
+      "sections": [
+        {
+          "id": "policy-pricing",
+          "heading": "Pricing and Delivery",
+          "body": [
+            "All prices are shown in EGP and delivery charges are surfaced before the final order step.",
+            "Cash-on-delivery fees and promo deductions are disclosed in the order summary before placement."
+          ]
+        },
+        {
+          "id": "policy-support",
+          "heading": "Support and Returns",
+          "body": [
+            "Clients can use the support center or order detail screen for delivery questions, cancellations, and return requests where applicable.",
+            "Return acceptance depends on category, fulfillment status, and boutique policy."
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "channels": [
+    {
+      "id": "support-whatsapp",
+      "title": "WhatsApp Concierge",
+      "subtitle": "Fast order support and fit guidance",
+      "detail": "Reach the concierge team for shipping updates, delivery instructions, and pre-purchase questions.",
+      "systemImage": "message.fill"
+    },
+    {
+      "id": "support-email",
+      "title": "Email Support",
+      "subtitle": "Written support follow-up",
+      "detail": "Use email for order corrections, refund follow-up, and account issues that need written confirmation.",
+      "systemImage": "envelope.fill"
+    },
+    {
+      "id": "support-orders",
+      "title": "Order Desk",
+      "subtitle": "Tracked delivery assistance",
+      "detail": "After checkout, the order timeline remains available in-app so support can resolve delivery questions with context.",
+      "systemImage": "shippingbox.fill"
+    }
+  ],
+  "faqs": [
+    {
+      "id": "faq-shipping",
+      "question": "When do delivery fees appear?",
+      "answer": "Delivery pricing appears as soon as you choose an address and delivery method in checkout, before you place the order."
+    },
+    {
+      "id": "faq-cod",
+      "question": "Where is cash on delivery available?",
+      "answer": "Cash on delivery is validated by governorate during checkout. Eligible areas show the COD fee before review and payment confirmation."
+    },
+    {
+      "id": "faq-orders",
+      "question": "Where can I track my orders?",
+      "answer": "Open Account, then Order History to view status, totals, delivery address, and the full order timeline."
+    },
+    {
+      "id": "faq-returns",
+      "question": "How are returns handled?",
+      "answer": "Return support is initiated from the order detail experience or through client support, depending on the product and delivery status."
+    }
+  ]
+}

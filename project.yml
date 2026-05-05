@@ -1,0 +1,47 @@
+name: Aurelien
+options:
+  bundleIdPrefix: com.shereenmagdy
+configs:
+  Debug: debug
+  Release: release
+targets:
+  Aurelien:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: AurelienApp/Sources
+        excludes:
+          - public/**
+      - path: AurelienApp/Resources
+        buildPhase: resources
+      - path: AurelienApp/AURE-LIEN-/public/v1
+        buildPhase: resources
+      - path: AurelienApp/AURE-LIEN-/data/state.json
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_NAME: BOUTIQUE
+        PRODUCT_BUNDLE_IDENTIFIER: com.shereenmagdy.aurelien
+        SWIFT_VERSION: 5.9
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: AurelienApp/Sources/Support/Info.plist
+        TARGETED_DEVICE_FAMILY: 1
+        IPHONEOS_DEPLOYMENT_TARGET: 17.0
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        DEVELOPMENT_ASSET_PATHS: "\"AurelienApp/Resources\""
+        ENABLE_PREVIEWS: YES
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGNING_ALLOWED: YES
+        CODE_SIGN_IDENTITY: "Apple Development"
+        DEVELOPMENT_TEAM: N5YRWQZ5W2
+        PROVISIONING_PROFILE_SPECIFIER: ""
+schemes:
+  Aurelien:
+    build:
+      targets:
+        Aurelien: all
+    run:
+      config: Debug
+    archive:
+      config: Release

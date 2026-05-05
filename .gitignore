@@ -1,0 +1,22 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+
+# Dependencies and generated output
+build/
+dist/
+.next/
+node_modules/
+*.tsbuildinfo
+DerivedData/
+
+# Xcode local state
+xcuserdata/
+*.xcuserstate
+
+# Local backend state and generated uploads
+AurelienApp/AURE-LIEN-/data/state.json
+AurelienApp/AURE-LIEN-/public/uploads/admin/
+AurelienApp/AURE-LIEN-/public/uploads/*.mp4
+AurelienApp/Sources/public/

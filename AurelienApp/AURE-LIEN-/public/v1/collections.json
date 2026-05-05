@@ -1,0 +1,32 @@
+{
+  "collections": [
+    {
+      "id": "collection-jackets",
+      "title": "Jackets",
+      "subtitle": "Leather, wool, and lighter transitional structure.",
+      "imageName": "/uploads/whitejacket.jpg",
+      "category": "jackets"
+    },
+    {
+      "id": "collection-suits",
+      "title": "Suits",
+      "subtitle": "Street-led tailoring with cleaner lines and premium neutrals.",
+      "imageName": "/uploads/whitesuit.jpg",
+      "category": "suits"
+    },
+    {
+      "id": "collection-knitwear",
+      "title": "Knitwear",
+      "subtitle": "Soft structure for layering across day and evening.",
+      "imageName": "/uploads/Dark Charcoal Chenille Turtleneck.jpg",
+      "category": "knitwear"
+    },
+    {
+      "id": "collection-denim",
+      "title": "Denim",
+      "subtitle": "Relaxed and tapered denim cuts for daily rotation.",
+      "imageName": "/uploads/Classic Blue Denim Jeans (Pull & Bear).jpg",
+      "category": "denim"
+    }
+  ]
+}

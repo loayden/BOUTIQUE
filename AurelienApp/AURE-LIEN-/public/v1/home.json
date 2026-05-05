@@ -1,0 +1,29 @@
+{
+  "heroStories": [
+    {
+      "id": "hero-delivery",
+      "eyebrow": "Delivered Today",
+      "title": "Marketplace speed, boutique standard.",
+      "subtitle": "Live inventory, tracked dispatch, and premium menswear in one storefront.",
+      "detail": "Browse editorial outerwear, tailoring, denim, and knitwear with faster Cairo and Giza fulfilment windows.",
+      "imageName": "/uploads/whitejacket.jpg",
+      "buttonTitle": "Open Shop"
+    },
+    {
+      "id": "hero-edit",
+      "eyebrow": "Editorial Edit",
+      "title": "Outerwear, tailoring, and knit layers.",
+      "subtitle": "Built for conversion without losing the luxury tone.",
+      "detail": "Product-led storytelling, clear category entry points, and sharper product discovery from first launch.",
+      "imageName": "/uploads/whitesuit.jpg",
+      "buttonTitle": "Open Discover"
+    }
+  ],
+  "promotions": [
+    {
+      "id": "promo-winter",
+      "title": "The Winter Edit",
+      "subtitle": "New arrivals, curated for you"
+    }
+  ]
+}
