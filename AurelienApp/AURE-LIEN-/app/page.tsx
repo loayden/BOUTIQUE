@@ -1,7 +1,7 @@
 import Image from 'next/image'
-import { getCatalog } from '../lib/backend'
+import { commerceImageObjectPosition, getCatalog } from '../lib/backend'
 
-export const revalidate = 300
+export const dynamic = 'force-dynamic'
 
 const currency = new Intl.NumberFormat('en-EG', {
   style: 'currency',
@@ -46,18 +46,21 @@ export default async function Home() {
         </div>
 
         {hero ? (
-          <div className="relative aspect-[4/5] overflow-hidden rounded-lg border border-[var(--border-warm)] bg-white/55 shadow-[0_24px_80px_rgba(61,48,37,0.12)]">
-            <Image
-              src={hero.images[0] ?? '/uploads/main.jpg'}
-              alt={hero.name}
-              fill
-              priority
-              sizes="(min-width: 1024px) 42vw, 92vw"
-              className="object-cover"
-            />
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#3D3025]/78 to-transparent p-5">
-              <p className="text-sm font-semibold text-[#FFF9EF]">{hero.name}</p>
-              <p className="mt-1 text-sm text-[#FFF9EF]/82">{currency.format(hero.price)}</p>
+          <div className="editorial-hero-panel">
+            <div className="editorial-hero-frame">
+              <Image
+                src={hero.images[0] ?? '/uploads/main.jpg'}
+                alt={hero.name}
+                fill
+                priority
+                sizes="(min-width: 1024px) 42vw, 92vw"
+                className="editorial-hero-image"
+                style={{ objectPosition: commerceImageObjectPosition(hero) }}
+              />
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#3D3025]/78 via-[#3D3025]/22 to-transparent p-5">
+                <p className="text-sm font-semibold text-[#FFF9EF]">{hero.name}</p>
+                <p className="mt-1 text-sm text-[#FFF9EF]/82">{currency.format(hero.price)}</p>
+              </div>
             </div>
           </div>
         ) : null}
@@ -80,18 +83,20 @@ export default async function Home() {
 
         {featuredProducts.length ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {featuredProducts.map((product) => (
+            {featuredProducts.map((product, index) => (
               <article
-                className="overflow-hidden rounded-lg border border-[var(--border-warm)] bg-white/60"
+                className="product-card"
                 key={product._id}
               >
-                <div className="relative aspect-[4/5] bg-[#F8F1E5]">
+                <div className="product-media-frame">
                   <Image
                     src={product.images[0] ?? '/uploads/main.jpg'}
                     alt={product.name}
                     fill
                     sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 92vw"
-                    className="object-cover"
+                    className="product-media-image"
+                    priority={index === 0}
+                    style={{ objectPosition: commerceImageObjectPosition(product) }}
                   />
                 </div>
                 <div className="p-4">

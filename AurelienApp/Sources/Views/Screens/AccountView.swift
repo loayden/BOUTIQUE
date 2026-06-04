@@ -1,13 +1,14 @@
 import SwiftUI
 
-// MARK: - Luxury Account View
-// Premium client experience with glass morphism cards
 struct AccountView: View {
     @Environment(AurelienStore.self) private var store
     @Binding var selectedTab: AppTab
     @State private var showLogin = false
     @State private var showSignOutConfirmation = false
+    @State private var showDeleteAccountConfirmation = false
     @State private var isSigningOut = false
+    @State private var isDeletingAccount = false
+    @State private var deleteAccountErrorMessage: String?
     @State private var appeared = false
 
     var body: some View {
@@ -59,6 +60,14 @@ struct AccountView: View {
             }
         } message: {
             Text("This will end the current session on this device and return you to sign in.")
+        }
+        .alert("Delete Account", isPresented: $showDeleteAccountConfirmation) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete Account", role: .destructive) {
+                Task { await deleteAccount() }
+            }
+        } message: {
+            Text("This removes your account from BOUTIQUE, clears saved data on this device, and signs you out.")
         }
         .onAppear {
             appeared = true
@@ -128,7 +137,7 @@ struct AccountView: View {
                             .background(BrandPalette.goldDim, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
                     }
 
-                    Text("The account area now behaves like a client hub, with order access, delivery preferences, and saved items grouped into a more stable mobile flow.")
+                    Text("Keep order history, delivery details, and saved pieces together in one calm account surface.")
                         .font(BrandFont.mobileBody())
                         .foregroundStyle(BrandPalette.textSecondary)
                         .lineSpacing(5)
@@ -163,26 +172,32 @@ struct AccountView: View {
             BrandSectionHeader(
                 eyebrow: "Client Services",
                 title: "Support, wallet, stylist guidance, and notifications stay native to the account.",
-                copy: "The account now behaves more like a complete commerce hub, not just a profile page."
+                copy: "Client care, payment preferences, and stylist guidance stay close without crowding the main shopping flow."
             )
 
-            NavigationLink(value: AppRoute.notifications) {
-                actionRowLabel(
-                    title: "Notifications",
-                    subtitle: store.unreadNotificationCount == 0 ? "All updates reviewed" : "\(store.unreadNotificationCount) unread updates",
-                    accent: store.unreadNotificationCount == 0 ? BrandPalette.textPrimary : BrandPalette.accent
-                )
-            }
-            .buttonStyle(.plain)
+            if store.isAuthenticated {
+                NavigationLink(value: AppRoute.notifications) {
+                    actionRowLabel(
+                        title: "Alerts",
+                        subtitle: store.unreadNotificationCount == 0 ? "All updates reviewed" : "\(store.unreadNotificationCount) unread updates",
+                        accent: store.unreadNotificationCount == 0 ? BrandPalette.textPrimary : BrandPalette.accent
+                    )
+                }
+                .buttonStyle(.plain)
 
-            NavigationLink(value: AppRoute.wallet) {
-                actionRowLabel(
-                    title: "Wallet & Preferences",
-                    subtitle: "\(store.savedAddresses.count) addresses • \(store.paymentMethods.count) payment methods",
-                    accent: BrandPalette.textPrimary
-                )
+                NavigationLink(value: AppRoute.wallet) {
+                    actionRowLabel(
+                        title: "Wallet & Preferences",
+                        subtitle: "\(store.savedAddresses.count) addresses • \(store.paymentMethods.count) payment methods",
+                        accent: BrandPalette.textPrimary
+                    )
+                }
+                .buttonStyle(.plain)
+            } else {
+                actionRow(title: "Sign In For Wallet Access", subtitle: "Saved addresses, alerts, and payment preferences require an account", accent: BrandPalette.textPrimary) {
+                    showLogin = true
+                }
             }
-            .buttonStyle(.plain)
 
             NavigationLink(value: AppRoute.stylist) {
                 actionRowLabel(
@@ -205,7 +220,7 @@ struct AccountView: View {
             NavigationLink(value: AppRoute.legal) {
                 actionRowLabel(
                     title: "Legal & Privacy",
-                    subtitle: "Terms, privacy, and storefront policy",
+                    subtitle: "Terms, privacy, and account policy",
                     accent: BrandPalette.textPrimary
                 )
             }
@@ -218,7 +233,7 @@ struct AccountView: View {
             BrandSectionHeader(
                 eyebrow: "House Access",
                 title: "Saved pieces and brand story stay close at hand.",
-                copy: "Open your wishlist, Discover feed, and account tools from one place."
+                copy: "Move back into saved products or the editorial house feed without losing your account context."
             )
 
             NavigationLink(value: AppRoute.wishlist) {
@@ -241,10 +256,20 @@ struct AccountView: View {
             BrandSectionHeader(
                 eyebrow: "Orders",
                 title: "Keep recent activity close at hand.",
-                copy: store.orders.isEmpty ? "Orders will appear here after checkout." : "Your latest order preview stays light, with the full timeline one tap away."
+                copy: store.isAuthenticated
+                    ? (store.orders.isEmpty ? "Orders will appear here after checkout." : "Your latest order preview stays light, with the full timeline one tap away.")
+                    : "Order history is available after sign-in so purchases and delivery updates stay attached to your account."
             )
 
-            if let latestOrder = store.orders.first {
+            if !store.isAuthenticated {
+                EmptyStatePanel(
+                    title: "Sign in to view orders",
+                    copy: "Order history, delivery tracking, and support follow-up are protected account data.",
+                    buttonTitle: "Sign In"
+                ) {
+                    showLogin = true
+                }
+            } else if let latestOrder = store.orders.first {
                 NavigationLink {
                     OrderDetailView(order: latestOrder)
                 } label: {
@@ -278,7 +303,7 @@ struct AccountView: View {
             } else {
                 EmptyStatePanel(
                     title: "No orders yet",
-                    copy: "Once you place an order, the timeline and delivery details will appear here in a clearer phone-friendly list.",
+                    copy: "Once you place an order, delivery progress and payment details will appear here.",
                     buttonTitle: "Explore Shop"
                 ) {
                     selectedTab = .shop
@@ -292,7 +317,7 @@ struct AccountView: View {
             BrandSectionHeader(
                 eyebrow: "Preferences",
                 title: "Keep personal settings and app information one tap away.",
-                copy: "Settings and app details now live inside the account journey instead of disappearing into system-only controls."
+                copy: "Device preferences, launch behavior, and house details stay available without leaving the account flow."
             )
 
             NavigationLink(value: AppRoute.settings) {
@@ -320,7 +345,7 @@ struct AccountView: View {
             BrandSectionHeader(
                 eyebrow: "Session",
                 title: "History, administration, and sign-in state stay easy to manage.",
-                copy: "Session controls are presented as a dedicated account surface instead of a loose action list."
+                copy: "Authentication, order access, and session controls stay grouped in one controlled section."
             )
 
             sessionOverviewCard
@@ -336,7 +361,7 @@ struct AccountView: View {
                 .buttonStyle(.plain)
             }
 
-            if store.isAdmin {
+            if store.isAdmin && AppExperiencePolicy.adminSurfacesEnabled {
                 NavigationLink(value: AppRoute.admin) {
                     actionRowLabel(
                         title: "Admin Dashboard",
@@ -349,6 +374,7 @@ struct AccountView: View {
 
             if store.isAuthenticated {
                 signOutActionCard
+                deleteAccountActionCard
             } else {
                 signInActionCard
             }
@@ -390,7 +416,7 @@ struct AccountView: View {
                 .font(BrandFont.mobileTitle3())
                 .foregroundStyle(BrandPalette.textPrimary)
 
-            Text("Use sign out when you want to remove account access from this device while keeping the storefront available.")
+            Text("Use sign out when you want to remove account access from this device while keeping browsing available.")
                 .font(BrandFont.mobileBody())
                 .foregroundStyle(BrandPalette.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -419,6 +445,54 @@ struct AccountView: View {
             }
             .buttonStyle(.plain)
             .disabled(isSigningOut)
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .brandPanel(cornerRadius: BrandRadius.soft, tone: .shadow, material: false)
+    }
+
+    private var deleteAccountActionCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Account Deletion")
+                .font(BrandFont.mobileTitle3())
+                .foregroundStyle(BrandPalette.textPrimary)
+
+            Text("Delete the account if you want BOUTIQUE to remove your profile, orders, saved pieces, addresses, and device session data.")
+                .font(BrandFont.mobileBody())
+                .foregroundStyle(BrandPalette.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Button {
+                showDeleteAccountConfirmation = true
+            } label: {
+                HStack {
+                    Text(isDeletingAccount ? "Deleting Account..." : "Delete Account")
+                    Spacer()
+                    Image(systemName: "trash")
+                }
+                .font(BrandFont.mobileBody())
+                .foregroundStyle(Color.red.opacity(0.92))
+                .frame(maxWidth: .infinity)
+                .frame(minHeight: 52)
+                .padding(.horizontal, 16)
+                .background(
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .fill(BrandPalette.surfaceRaised)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .stroke(Color.red.opacity(0.24), lineWidth: 0.7)
+                )
+            }
+            .buttonStyle(.plain)
+            .disabled(isDeletingAccount)
+
+            if let deleteAccountErrorMessage {
+                Text(deleteAccountErrorMessage)
+                    .font(BrandFont.mobileCaption())
+                    .foregroundStyle(BrandPalette.error)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -497,7 +571,21 @@ struct AccountView: View {
 
         try? await APIService.shared.logout()
         store.logout()
-        showLogin = true
+        showLogin = false
+    }
+
+    private func deleteAccount() async {
+        guard !isDeletingAccount else { return }
+        isDeletingAccount = true
+        defer { isDeletingAccount = false }
+        deleteAccountErrorMessage = nil
+
+        do {
+            try await store.deleteCurrentAccount()
+            showLogin = false
+        } catch {
+            deleteAccountErrorMessage = (error as? APIError)?.errorDescription ?? error.localizedDescription
+        }
     }
 }
 
@@ -549,17 +637,17 @@ struct SettingsView: View {
                 )
 
                 settingsSection(
-                    title: "Notifications",
-                    subtitle: "Choose which signals stay active on this device."
+                    title: "In-App Alerts",
+                    subtitle: "Choose which alerts stay visible on this device."
                 ) {
                     settingsToggle(
-                        title: "Order Updates",
-                        subtitle: "Shipping status, delivery progress, and post-order actions.",
+                        title: "Order Alerts",
+                        subtitle: "Shipping status, delivery progress, and post-order actions shown inside the app.",
                         isOn: $pushOrderUpdates
                     )
                     settingsToggle(
                         title: "Editorial Alerts",
-                        subtitle: "New drops, collection edits, and personalized recommendations.",
+                        subtitle: "New drops, collection edits, and personalized recommendations shown in-app.",
                         isOn: $pushEditorialAlerts
                     )
                 }
@@ -692,7 +780,7 @@ struct AboutAppView: View {
                         .font(BrandFont.serif(24, relativeTo: .title2))
                         .foregroundStyle(BrandPalette.textPrimary)
 
-                    Text("BOUTIQUE is designed as a luxury fashion marketplace for clients who want the pace of delivery apps with the polish of a private boutique. The storefront, bag, checkout, and account surfaces are all tuned for smaller screens, calmer reading, and clearer conversion steps.")
+                    Text("BOUTIQUE is designed as a luxury fashion marketplace for clients who want the pace of modern delivery with the polish of a private boutique. The app keeps shopping, checkout, and client care calm, image-led, and direct.")
                         .font(BrandFont.mobileBody())
                         .foregroundStyle(BrandPalette.textSecondary)
                         .lineSpacing(5)
@@ -723,7 +811,7 @@ struct AboutAppView: View {
                     NavigationLink(value: AppRoute.legal) {
                         aboutActionRow(
                             title: "Open Legal Center",
-                            subtitle: "Terms, privacy, and storefront policies."
+                            subtitle: "Terms, privacy, and account policies."
                         )
                     }
                     .buttonStyle(.plain)

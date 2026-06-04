@@ -7,7 +7,20 @@
     "build": "next build",
     "start": "next start",
     "lint": "tsc --noEmit",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:start": "sh ./scripts/mongo-start.sh",
+    "db:stop": "sh ./scripts/mongo-stop.sh",
+    "db:seed": "node ./scripts/mongo-seed.mjs",
+    "db:status": "node ./scripts/mongo-health.mjs",
+    "db:ensure-production": "node ./scripts/mongo-ensure-production.mjs",
+    "db:init": "npm run db:start && npm run db:seed && npm run db:status",
+    "smoke:api": "node ./scripts/api-smoke.mjs",
+    "smoke:auth": "node ./scripts/auth-readiness.mjs",
+    "smoke:admin": "node ./scripts/admin-readiness.mjs",
+    "smoke:ecommerce": "node ./scripts/ecommerce-readiness.mjs",
+    "smoke:api:readiness": "node ./scripts/api-readiness.mjs",
+    "prod:env:check": "node ./scripts/vercel-env-readiness.mjs",
+    "prod:env:sync": "node ./scripts/vercel-sync-production-env.mjs"
   },
   "dependencies": {
     "mongodb": "^7.2.0",

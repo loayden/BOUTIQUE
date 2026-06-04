@@ -151,6 +151,7 @@ struct PhoneScrollScreen<Content: View>: View {
                         .padding(.bottom, 16)
                 }
                 .coordinateSpace(name: scrollSpaceName)
+                .background(BrandPalette.background)
                 .onPreferenceChange(PhoneScrollOffsetPreferenceKey.self) { offset in
                     let shouldShow = offset < -520
                     if shouldShow != showScrollToTop {
@@ -173,8 +174,7 @@ struct PhoneScrollScreen<Content: View>: View {
                                 .frame(width: 48, height: 48)
                                 .background(
                                     Circle()
-                                        .fill(BrandPalette.surfaceRaised.opacity(0.96))
-                                        .background(.ultraThinMaterial, in: Circle())
+                                        .fill(BrandPalette.surfaceRaised.opacity(0.98))
                                 )
                                 .overlay(
                                     Circle()
@@ -190,6 +190,7 @@ struct PhoneScrollScreen<Content: View>: View {
                 }
             }
             .scrollBounceBehavior(.basedOnSize)
+            .background(BrandPalette.background.ignoresSafeArea())
         }
     }
 }

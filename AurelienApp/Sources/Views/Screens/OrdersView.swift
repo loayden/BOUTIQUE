@@ -96,7 +96,7 @@ struct OrdersView: View {
     private var emptyView: some View {
         EmptyStatePanel(
             title: selectedFilter == nil ? "No orders yet" : "No \(selectedFilter?.title.lowercased() ?? "") orders",
-            copy: "As soon as you place an order, the timeline, totals, and delivery details will appear here in a mobile-first list.",
+            copy: "As soon as you place an order, its timeline, totals, payment state, and delivery progress will appear here.",
             buttonTitle: "Browse Shop"
         ) {
             BrandHaptics.selection()

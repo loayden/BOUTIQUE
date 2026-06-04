@@ -23,7 +23,7 @@ struct WishlistView: View {
                 if store.wishlist.isEmpty {
                     EmptyStatePanel(
                         title: "Your saved pieces are waiting",
-                        copy: "Tap the heart on any product to keep it here. The layout stays dark, calm, and easy to edit on a phone.",
+                        copy: "Tap the heart on any product to keep it here for a quicker return to the pieces with the most presence.",
                         buttonTitle: "Explore Shop"
                     ) {
                         selectedTab = .shop
@@ -31,12 +31,20 @@ struct WishlistView: View {
                 } else {
                     BrandSectionHeader(
                         eyebrow: "Saved",
-                        title: "Everything you’ve kept, arranged for quick return.",
-                        copy: "Saved items now stay in a single mobile column so imagery and product details never feel cramped."
+                        title: "Everything you’ve kept, arranged for a calmer return.",
+                        copy: "Saved products stay image-led and easy to scan, with enough room for price, status, and quick decisions."
                     )
 
-                    ForEach(store.wishlistedProducts) { product in
-                        ProductCardView(product: product)
+                    LazyVGrid(
+                        columns: [
+                            GridItem(.flexible(), spacing: BrandSpacing.md),
+                            GridItem(.flexible(), spacing: BrandSpacing.md)
+                        ],
+                        spacing: BrandSpacing.lg
+                    ) {
+                        ForEach(store.wishlistedProducts) { product in
+                            ProductCardView(product: product, style: .grid, compact: true)
+                        }
                     }
                 }
             }

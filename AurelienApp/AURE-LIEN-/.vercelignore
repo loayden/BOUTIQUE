@@ -2,10 +2,25 @@
 .env.*
 !.env.example
 node_modules
+node_modules/**
 dist
+dist/**
 .next
+.next/**
 .DS_Store
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 public/uploads/*.mp4
+public/uploads/**/*.mp4
+public/uploads/0316 (3).mp4
+public/uploads/0316\ (3).mp4
+public/uploads/Goldmaa.mp4
+public/uploads/accessories.mp4
+public/uploads/clothes.mp4
+public/uploads/footwear.mp4
+public/uploads/pants-hero.mp4
+public/uploads/*.mov
+public/uploads/**/*.mov
+public/uploads/*.webm
+public/uploads/**/*.webm

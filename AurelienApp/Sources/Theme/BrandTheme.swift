@@ -3,22 +3,23 @@ import UIKit
 
 enum BrandPalette {
     // MARK: Backgrounds
-    static let background = Color.boutCream
+    static let background = Color.boutBackground
     static let backgroundWarm = Color.boutCreamTop
-    static let surface = Color(hex: "#FFFFFF").opacity(0.72)
-    static let surfaceRaised = Color(hex: "#F8F1E5").opacity(0.86)
-    static let surfaceElevated = surfaceRaised
-    static let overlay = Color(hex: "#FFFFFF").opacity(0.56)
-    static let surfaceGlass = Color(hex: "#FFFFFF").opacity(0.72)
+    static let productMediaBackground = Color.boutWarmSurface.opacity(0.98)
+    static let surface = Color.boutCreamTop.opacity(0.90)
+    static let surfaceRaised = Color.boutWarmSurface.opacity(0.98)
+    static let surfaceElevated = Color.white.opacity(0.74)
+    static let overlay = Color.boutCreamTop.opacity(0.72)
+    static let surfaceGlass = Color.white.opacity(0.62)
 
     // MARK: Accents
-    static let gold = Color.boutGoldText
+    static let gold = Color.boutGold
     static let goldWarm = Color.boutGold
-    static let goldLight = Color(hex: "#B98A45")
+    static let goldLight = Color(hex: "#C8A66A")
     static let goldDeep = Color.boutGoldText
-    static let goldGlow = Color.boutGold.opacity(0.22)
-    static let goldDim = Color.boutGold.opacity(0.12)
-    static let goldShimmer = Color.boutGold.opacity(0.76)
+    static let goldGlow = Color.boutGold.opacity(0.18)
+    static let goldDim = Color.boutGold.opacity(0.10)
+    static let goldShimmer = Color.boutGold.opacity(0.72)
     static let sage = Color.boutSuccess
     static let steel = Color.boutInkSoft
     static let rose = Color.boutError
@@ -31,36 +32,36 @@ enum BrandPalette {
 
     // MARK: Typography
     static let ivory = Color.boutCreamTop
-    static let sand = Color.boutInkSoft
-    static let muted = Color.boutInk.opacity(0.72)
+    static let sand = Color.boutMuted
+    static let muted = Color.boutInk.opacity(0.70)
     static let ivoryMuted = sand
 
     static let textPrimary = Color.boutInk
-    static let textSecondary = Color.boutInkSoft
-    static let textMuted = Color.boutInk.opacity(0.72)
+    static let textSecondary = Color.boutMuted
+    static let textMuted = Color.boutInk.opacity(0.70)
     static let error = Color.boutError
     static let success = Color.boutSuccess
 
     // MARK: Borders / Glass
     static let hairline = Color.boutBorder
     static let hairlineStrong = Color.boutBorderStrong
-    static let goldBorder = Color.boutGold.opacity(0.30)
+    static let goldBorder = Color.boutGold.opacity(0.24)
     static let hairlineGold = goldBorder
 
-    static let glassLight = Color.boutGlassTop
-    static let glassMedium = Color.boutGlassBottom
-    static let glassDark = Color.boutCreamBottom.opacity(0.96)
+    static let glassLight = Color.white.opacity(0.78)
+    static let glassMedium = Color.boutWarmSurface.opacity(0.82)
+    static let glassDark = Color.boutWarmSurface.opacity(0.96)
     static let glassBorder = hairlineStrong
     static let glassBorderGold = goldBorder
 
     // MARK: Shadows / Ambient
-    static let shadowSoft = Color.boutInk.opacity(0.08)
-    static let shadowMedium = Color.boutInk.opacity(0.12)
-    static let shadowStrong = Color.boutInk.opacity(0.18)
+    static let shadowSoft = Color.boutInk.opacity(0.06)
+    static let shadowMedium = Color.boutInk.opacity(0.10)
+    static let shadowStrong = Color.boutInk.opacity(0.16)
     static let shadowGlow = goldGlow.opacity(0.24)
 
     static let ambientGold = goldGlow
-    static let ambientLight = Color.boutCreamTop.opacity(0.55)
+    static let ambientLight = Color.boutCreamTop.opacity(0.45)
 
     static var goldGradient: LinearGradient {
         LinearGradient(
@@ -72,7 +73,7 @@ enum BrandPalette {
 
     static var glassGradient: LinearGradient {
         LinearGradient(
-            colors: [Color.boutGlassTop, Color.boutGlassBottom, Color.boutCream.opacity(0.68)],
+            colors: [Color.white.opacity(0.72), Color.boutWarmSurface.opacity(0.94), Color.boutCreamTop.opacity(0.84)],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
@@ -80,7 +81,7 @@ enum BrandPalette {
 
     static var backgroundGradient: LinearGradient {
         LinearGradient(
-            colors: [Color.boutCreamTop, Color.boutCream, Color.boutCreamBottom],
+            colors: [Color.boutCreamTop, Color.boutBackground, Color.boutWarmSurface],
             startPoint: .top,
             endPoint: .bottom
         )
@@ -144,15 +145,15 @@ enum BrandHaptics {
 
 enum BrandAppearance {
     static func configure() {
-        let selectedColor = UIColor(hexString: "#7A581F")
-        let normalColor = UIColor(hexString: "#6F6254")
-        let backgroundColor = UIColor(hexString: "#FFF9EF", alpha: 0.88)
+        let selectedColor = UIColor(hexString: "#73561F")
+        let normalColor = UIColor(hexString: "#4E4A45")
+        let backgroundColor = UIColor(hexString: "#FFFDF8", alpha: 0.94)
 
         let tabAppearance = UITabBarAppearance()
         tabAppearance.configureWithTransparentBackground()
-        tabAppearance.backgroundEffect = UIBlurEffect(style: .systemUltraThinMaterialLight)
+        tabAppearance.backgroundEffect = UIBlurEffect(style: .systemThinMaterialLight)
         tabAppearance.backgroundColor = backgroundColor
-        tabAppearance.shadowColor = UIColor(hexString: "#7B6752", alpha: 0.18)
+        tabAppearance.shadowColor = UIColor(hexString: "#49443C", alpha: 0.14)
 
         let captionFont = UIFont.preferredFont(forTextStyle: .caption2)
         [tabAppearance.stackedLayoutAppearance,
@@ -176,20 +177,19 @@ enum BrandAppearance {
 
         let navAppearance = UINavigationBarAppearance()
         navAppearance.configureWithTransparentBackground()
-        navAppearance.backgroundEffect = UIBlurEffect(style: .systemUltraThinMaterialLight)
-        navAppearance.backgroundColor = UIColor(hexString: "#FFF9EF", alpha: 0.86)
+        navAppearance.backgroundEffect = UIBlurEffect(style: .systemThinMaterialLight)
+        navAppearance.backgroundColor = UIColor(hexString: "#FFFDF8", alpha: 0.90)
         navAppearance.shadowColor = UIColor.clear
 
-        // Serif fonts for nav bar titles
-        let serifTitleFont = UIFont(name: "Georgia", size: 17) ?? UIFont.systemFont(ofSize: 17, weight: .semibold)
-        let serifLargeFont = UIFont(name: "Georgia-Bold", size: 32) ?? UIFont.systemFont(ofSize: 32, weight: .bold)
+        let serifTitleFont = UIFont(name: "Georgia", size: 18) ?? UIFont.systemFont(ofSize: 18, weight: .medium)
+        let serifLargeFont = UIFont(name: "Georgia", size: 31) ?? UIFont.systemFont(ofSize: 31, weight: .regular)
 
         navAppearance.titleTextAttributes = [
-            .foregroundColor: UIColor(hexString: "#3D3025"),
+            .foregroundColor: UIColor(hexString: "#171513"),
             .font: serifTitleFont
         ]
         navAppearance.largeTitleTextAttributes = [
-            .foregroundColor: UIColor(hexString: "#3D3025"),
+            .foregroundColor: UIColor(hexString: "#171513"),
             .font: serifLargeFont
         ]
 
@@ -242,21 +242,24 @@ enum BrandFormatter {
 }
 
 extension Color {
-    static let boutInk = Color(hex: "3D3025")
-    static let boutInkSoft = Color(hex: "6F6254")
-    static let boutCream = Color(hex: "F5F1E8")
-    static let boutCreamTop = Color(hex: "FFF9EF")
-    static let boutCreamBottom = Color(hex: "EDE3D6")
-    static let boutGold = Color(hex: "A87935")
-    static let boutGoldText = Color(hex: "7A581F")
-    static let boutButtonStart = Color(hex: "4C3A26")
-    static let boutButtonEnd = Color(hex: "7D592B")
+    static let boutInk = Color(hex: "171513")
+    static let boutInkSoft = Color(hex: "4E4A45")
+    static let boutMuted = Color(hex: "4E4A45")
+    static let boutBackground = Color(hex: "F7F7F4")
+    static let boutCream = Color(hex: "F7F7F4")
+    static let boutCreamTop = Color(hex: "FFFDF8")
+    static let boutWarmSurface = Color(hex: "F2EFE8")
+    static let boutCreamBottom = Color(hex: "F2EFE8")
+    static let boutGold = Color(hex: "9B7532")
+    static let boutGoldText = Color(hex: "73561F")
+    static let boutButtonStart = Color(hex: "171513")
+    static let boutButtonEnd = Color(hex: "231F1C")
     static let boutError = Color(hex: "9A2222")
     static let boutSuccess = Color(hex: "256944")
-    static let boutBorder = Color(hex: "7B6752").opacity(0.18)
-    static let boutBorderStrong = Color(hex: "7B6752").opacity(0.26)
-    static let boutGlassTop = Color(hex: "FFFFFF").opacity(0.72)
-    static let boutGlassBottom = Color(hex: "F8F1E5").opacity(0.56)
+    static let boutBorder = Color(hex: "49443C").opacity(0.14)
+    static let boutBorderStrong = Color(hex: "49443C").opacity(0.22)
+    static let boutGlassTop = Color(hex: "FFFDF8").opacity(0.74)
+    static let boutGlassBottom = Color(hex: "F2EFE8").opacity(0.82)
 
     init(hex: String, opacity: Double = 1) {
         let sanitized = hex.replacingOccurrences(of: "#", with: "")

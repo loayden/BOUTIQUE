@@ -29,7 +29,7 @@ struct LoginView: View {
                         AuthHeader(
                             eyebrow: "Private Client",
                             title: "Sign in to keep checkout, saved pieces, and order history in sync.",
-                            subtitle: "A cleaner account flow keeps payment, delivery addresses, and wishlist activity ready the moment you return."
+                            subtitle: "Keep saved pieces, delivery details, and order history ready the moment you return."
                         )
 
                         AuthSignalStrip()
@@ -71,7 +71,7 @@ struct LoginView: View {
                                 HStack(spacing: 10) {
                                     if isLoading {
                                         ProgressView()
-                                            .tint(BrandPalette.textPrimary)
+                                            .tint(Color.boutCreamTop)
                                     } else {
                                         Image(systemName: "lock.open.display")
                                             .font(.subheadline.weight(.semibold))
@@ -202,7 +202,7 @@ struct LoginView: View {
             case .unauthorized:
                 return "Email or password is incorrect."
             case .notFound, .serverError:
-                return "We couldn't verify these credentials with the live service right now. Create an account or try again shortly."
+                return "We couldn't verify these credentials right now. Try again shortly or create an account first."
             case .networkError:
                 let (_, message, suggestion) = AppErrorHandler.categorize(error)
                 return [message, suggestion].filter { !$0.isEmpty }.joined(separator: "\n\n")
@@ -240,7 +240,7 @@ struct SignupView: View {
                         AuthHeader(
                             eyebrow: "Create Account",
                             title: "Set up your client profile once, then keep bag, address, and checkout data ready.",
-                            subtitle: "This form stays phone-first, validates inline, and saves directly into the live account flow."
+                            subtitle: "Create your account once, then move through saved pieces, checkout, and orders with less friction."
                         )
 
                         VStack(alignment: .leading, spacing: 16) {

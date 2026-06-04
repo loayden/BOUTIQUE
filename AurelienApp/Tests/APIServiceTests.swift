@@ -18,10 +18,14 @@ final class CommerceHardeningTests: XCTestCase {
     override func setUp() {
         super.setUp()
         AuthTokenStore.deleteValue(for: AuthTokenStore.serviceKey)
+        UserDefaults.standard.removeObject(forKey: "aurelien.currentUser")
+        UserDefaults.standard.removeObject(forKey: "aurelien.authToken")
     }
 
     override func tearDown() {
         AuthTokenStore.deleteValue(for: AuthTokenStore.serviceKey)
+        UserDefaults.standard.removeObject(forKey: "aurelien.currentUser")
+        UserDefaults.standard.removeObject(forKey: "aurelien.authToken")
         super.tearDown()
     }
 
@@ -60,6 +64,145 @@ final class CommerceHardeningTests: XCTestCase {
         )
         let removed = try await cart(token: session.token)
         XCTAssertFalse(removed.items.contains { $0.productId == product.id && $0.size == size && $0.color == color })
+    }
+
+    func testSavedProductsPersistPerAccount() async throws {
+        let session = try await createUser()
+        let product = try await firstOrderableProduct()
+        AuthTokenStore.save(session.token, for: AuthTokenStore.serviceKey)
+
+        let saved = try await api.saveProduct(productId: product.id, userId: session.user.id)
+        XCTAssertTrue(saved.contains { $0.id == product.id })
+
+        let fetched = try await api.fetchSavedProducts(userId: session.user.id)
+        XCTAssertEqual(Set(fetched.map(\.id)), [product.id])
+
+        let cleared = try await api.removeSavedProduct(productId: product.id, userId: session.user.id)
+        XCTAssertFalse(cleared.contains { $0.id == product.id })
+    }
+
+    func testSavedAddressesPersistPerAccount() async throws {
+        let session = try await createUser()
+        AuthTokenStore.save(session.token, for: AuthTokenStore.serviceKey)
+
+        let created = SavedAddress(
+            id: "address-\(UUID().uuidString.lowercased())",
+            label: "Home",
+            recipient: "Test Shopper",
+            line1: "12 Nile Street",
+            apartment: "4B",
+            city: .cairo,
+            phone: "01012345678",
+            isPrimary: true
+        )
+
+        let addresses = try await api.createSavedAddress(created)
+        XCTAssertEqual(addresses.first?.id, created.id)
+        XCTAssertTrue(addresses.first?.isPrimary == true)
+
+        let wallet = try await api.fetchWalletSnapshot()
+        XCTAssertTrue(wallet.savedAddresses.contains(where: { $0.id == created.id }))
+
+        let cleared = try await api.deleteSavedAddress(id: created.id)
+        XCTAssertFalse(cleared.contains { $0.id == created.id })
+    }
+
+    func testSavedAddressPrimaryTransitionPersistsPerAccount() async throws {
+        let session = try await createUser()
+        AuthTokenStore.save(session.token, for: AuthTokenStore.serviceKey)
+
+        let home = SavedAddress(
+            id: "address-home-\(UUID().uuidString.lowercased())",
+            label: "Home",
+            recipient: "Test Shopper",
+            line1: "12 Nile Street",
+            apartment: "4B",
+            city: .cairo,
+            phone: "01012345678",
+            isPrimary: true
+        )
+        let studio = SavedAddress(
+            id: "address-studio-\(UUID().uuidString.lowercased())",
+            label: "Studio",
+            recipient: "Test Shopper",
+            line1: "44 Garden City",
+            apartment: "9A",
+            city: .giza,
+            phone: "01012345679",
+            isPrimary: false
+        )
+
+        _ = try await api.createSavedAddress(home)
+        _ = try await api.createSavedAddress(studio)
+
+        let promoted = try await api.setPrimarySavedAddress(id: studio.id)
+        XCTAssertTrue(promoted.contains { $0.id == studio.id && $0.isPrimary })
+        XCTAssertFalse(promoted.contains { $0.id == home.id && $0.isPrimary })
+
+        let wallet = try await api.fetchWalletSnapshot()
+        XCTAssertTrue(wallet.savedAddresses.contains { $0.id == studio.id && $0.isPrimary })
+        XCTAssertFalse(wallet.savedAddresses.contains { $0.id == home.id && $0.isPrimary })
+    }
+
+    func testNotificationsReadAndDeletePersist() async throws {
+        let session = try await createUser()
+        AuthTokenStore.save(session.token, for: AuthTokenStore.serviceKey)
+        let product = try await firstOrderableProduct()
+        let size = try XCTUnwrap(product.sizes.first)
+        let color = try XCTUnwrap(product.colors.first?.name)
+        let shippingAddress = ShippingAddress(
+            name: "Test Shopper",
+            street: "12 Nile Street",
+            city: "Cairo",
+            postalCode: "11511",
+            phone: "01012345678",
+            email: session.user.email
+        )
+        let orderRequest = TestOrderPlacementRequest(
+            id: "notification-order-\(UUID().uuidString.lowercased())",
+            items: [
+                TestOrderItemRequest(
+                    productId: product.id,
+                    quantity: 1,
+                    size: size,
+                    color: color
+                )
+            ],
+            status: "pending",
+            subtotal: product.price,
+            shippingCost: 0,
+            discount: 0,
+            shippingCity: "Cairo",
+            shippingAddress: shippingAddress,
+            paymentMethod: PaymentMethod(type: "cod", displayName: "Cash on delivery"),
+            paymentMethodId: "cod",
+            promoCode: nil,
+            deliveryLocation: "Cairo",
+            codFee: 0,
+            customerName: shippingAddress.name,
+            customerEmail: session.user.email,
+            customerPhone: shippingAddress.phone,
+            shippingMethodName: "Standard"
+        )
+
+        _ = try await backendRequest(
+            endpoint: "/orders",
+            method: "POST",
+            body: orderRequest,
+            token: session.token
+        )
+
+        let fetched = try await api.fetchNotifications()
+        let notification = try XCTUnwrap(fetched.first)
+        XCTAssertFalse(notification.isRead)
+
+        try await api.markNotificationRead(id: notification.id)
+        let markedRead = try await api.fetchNotifications()
+        XCTAssertTrue(markedRead.contains { $0.id == notification.id && $0.isRead })
+
+        try await api.deleteNotification(id: notification.id)
+        let cleared = try await api.fetchNotifications()
+        XCTAssertFalse(cleared.contains { $0.id == notification.id })
     }
 
     func testOrderCreationRecomputesTotalsServerSide() async throws {
@@ -125,6 +268,204 @@ final class CommerceHardeningTests: XCTestCase {
         XCTAssertTrue("01012345678".isValidEgyptianMobile)
         XCTAssertFalse("0112345678".isValidEgyptianMobile)
         XCTAssertFalse("02012345678".isValidEgyptianMobile)
+    }
+
+    func testSharedAppBackgroundUsesWarmCreamCanvas() {
+        XCTAssertEqual(UIColor(BrandPalette.background).rgbHexString, "F7F7F4")
+    }
+
+    func testCommerceProductCardsUseFourByFiveImageRatio() {
+        XCTAssertEqual(Double(ProductCardView.imageAspectRatio), 0.8, accuracy: 0.001)
+        XCTAssertEqual(Double(ProductDetailView.commerceImageAspectRatio), 0.8, accuracy: 0.001)
+    }
+
+    func testProductDetailStickyCTAReservesBottomClearance() {
+        XCTAssertGreaterThanOrEqual(Double(ProductDetailView.stickyBarBottomPadding), 24)
+        XCTAssertGreaterThanOrEqual(Double(ProductDetailView.stickyBarContentPadding), 160)
+    }
+
+    func testRemoteAssetURLResolvesUploadsAgainstAPIOrigin() throws {
+        let resolved = APIConfig.resolvedRemoteAssetURLString(
+            for: "/uploads/whitejacket.jpg",
+            usesEmbeddedStaticBackend: false,
+            apiOriginURL: try XCTUnwrap(URL(string: "https://boutique-api-one.vercel.app/api")),
+            contentOriginURL: try XCTUnwrap(URL(string: "https://boutique-api-one.vercel.app/v1"))
+        )
+
+        XCTAssertEqual(resolved, "https://boutique-api-one.vercel.app/uploads/whitejacket.jpg")
+    }
+
+    func testRemoteAssetURLResolvesBareFilenameIntoUploadsPath() throws {
+        let resolved = APIConfig.resolvedRemoteAssetURLString(
+            for: "shirts.jpg",
+            usesEmbeddedStaticBackend: false,
+            apiOriginURL: try XCTUnwrap(URL(string: "https://boutique-api-one.vercel.app/api")),
+            contentOriginURL: try XCTUnwrap(URL(string: "https://boutique-api-one.vercel.app/v1"))
+        )
+
+        XCTAssertEqual(resolved, "https://boutique-api-one.vercel.app/uploads/shirts.jpg")
+    }
+
+    func testRemoteAssetURLEncodesSpacesInUploadPath() throws {
+        let resolved = APIConfig.resolvedRemoteAssetURLString(
+            for: "/uploads/Cream Zip-Up Harrington Jacket.jpg",
+            usesEmbeddedStaticBackend: false,
+            apiOriginURL: try XCTUnwrap(URL(string: "http://127.0.0.1:3000/api")),
+            contentOriginURL: try XCTUnwrap(URL(string: "https://raw.githubusercontent.com/loayden/BOUTIQUE/main/AurelienApp/AURE-LIEN-/public/v1"))
+        )
+
+        XCTAssertEqual(resolved, "http://127.0.0.1:3000/uploads/Cream%20Zip-Up%20Harrington%20Jacket.jpg")
+    }
+
+    func testRemoteAssetURLRebasesLocalhostUploadsOntoActiveAPIOrigin() throws {
+        let resolved = APIConfig.resolvedRemoteAssetURLString(
+            for: "http://localhost:3000/uploads/whitejacket.jpg",
+            usesEmbeddedStaticBackend: false,
+            apiOriginURL: try XCTUnwrap(URL(string: "http://127.0.0.1:3000/api")),
+            contentOriginURL: try XCTUnwrap(URL(string: "https://raw.githubusercontent.com/loayden/BOUTIQUE/main/AurelienApp/AURE-LIEN-/public/v1"))
+        )
+
+        XCTAssertEqual(resolved, "http://127.0.0.1:3000/uploads/whitejacket.jpg")
+    }
+
+    func testGuestLaunchAfterOnboardingRoutesIntoMainApp() {
+        XCTAssertEqual(
+            AppLaunchDestination.resolve(
+                showSplash: false,
+                didCompleteOnboarding: true,
+                isAuthenticated: false
+            ),
+            .mainApp
+        )
+    }
+
+    func testPublicRouteFallsBackFromAdminForNonAdminUsers() {
+        XCTAssertEqual(AppExperiencePolicy.publicRoute(for: .admin, isAdmin: false), .profile)
+        XCTAssertEqual(AppExperiencePolicy.publicRoute(for: .orders, isAdmin: false), .orders)
+        XCTAssertEqual(
+            AppExperiencePolicy.publicRoute(for: .orders, isAdmin: false, isAuthenticated: false),
+            .login
+        )
+        XCTAssertEqual(
+            AppExperiencePolicy.publicRoute(for: .wallet, isAdmin: false, isAuthenticated: false),
+            .login
+        )
+        XCTAssertEqual(
+            AppExperiencePolicy.publicRoute(for: .notifications, isAdmin: false, isAuthenticated: false),
+            .login
+        )
+    }
+
+    func testDiscoverSurfaceExcludesCommunityInPublicRelease() {
+        XCTAssertEqual(DiscoverSurface.allCases, [.feed, .drops])
+    }
+
+    func testDeleteAccountRemovesUserAndInvalidatesSession() async throws {
+        let session = try await createUser()
+
+        _ = try await EmbeddedStaticBackend.shared.performRequest(
+            endpoint: "/users/me",
+            method: "DELETE",
+            body: nil,
+            token: session.token
+        )
+
+        do {
+            _ = try await backendRequest(
+                endpoint: "/auth/signin",
+                method: "POST",
+                body: LoginCredentials(email: session.user.email, password: "SecurePass123!"),
+                token: nil
+            )
+            XCTFail("Deleted account should not be able to sign in.")
+        } catch APIError.unauthorized {
+            // Expected.
+        }
+    }
+
+    func testDeleteCurrentAccountLocallyClearsSessionAndScopedState() {
+        let store = AurelienStore(startBackgroundTasks: false, restorePersistedSession: true)
+        let user = User(
+            id: "delete-me",
+            name: "Client",
+            email: "client@example.com",
+            phone: nil,
+            isAdmin: false,
+            createdAt: nil,
+            updatedAt: nil
+        )
+        let address = SavedAddress(
+            id: "address",
+            label: "Home",
+            recipient: "Client",
+            line1: "12 Nile Street",
+            apartment: nil,
+            city: .cairo,
+            phone: "01012345678",
+            isPrimary: true
+        )
+
+        store.login(user: user, token: "embedded-static.delete-me")
+        store.recentQueries = ["blazer"]
+        store.wishlist = ["product-1"]
+        store.savedAddresses = [address]
+        store.selectedTab = .account
+
+        store.completeLocalAccountDeletion()
+
+        XCTAssertNil(store.currentUser)
+        XCTAssertNil(store.authToken)
+        XCTAssertTrue(store.recentQueries.isEmpty)
+        XCTAssertTrue(store.wishlist.isEmpty)
+        XCTAssertTrue(store.savedAddresses.isEmpty)
+        XCTAssertEqual(store.selectedTab, .home)
+    }
+
+    func testReleaseReadinessRequiresPrivacyManifestAndHTTPSProductionURLs() {
+        let issues = ReleaseReadinessValidator.issues(
+            apiBaseURL: "http://localhost:3000/api",
+            staticContentBaseURL: Optional<String>.none,
+            privacyManifestPresent: false,
+            privacyPolicyURL: "http://example.com/privacy",
+            supportURL: Optional<String>.none
+        )
+
+        XCTAssertTrue(issues.contains(.missingPrivacyManifest))
+        XCTAssertTrue(issues.contains(.invalidAPIBaseURL))
+        XCTAssertTrue(issues.contains(.invalidStaticContentBaseURL))
+        XCTAssertTrue(issues.contains(.invalidPrivacyPolicyURL))
+        XCTAssertTrue(issues.contains(.invalidSupportURL))
+    }
+
+    func testAppBundleIncludesPrivacyManifest() {
+        XCTAssertNotNil(Bundle.main.url(forResource: "PrivacyInfo", withExtension: "xcprivacy"))
+    }
+
+    func testAppBundleDoesNotShipEmbeddedCommerceFixtures() {
+        ["products", "discover", "collections", "home", "support", "legal", "state"].forEach { name in
+            XCTAssertNil(Bundle.main.url(forResource: name, withExtension: "json"))
+        }
+    }
+
+    func testStoreDoesNotRestorePersistedUserWithoutSessionToken() throws {
+        let staleUser = User(
+            id: "stale-user",
+            name: "Stale User",
+            email: "stale@example.com",
+            phone: nil,
+            isAdmin: false,
+            createdAt: nil,
+            updatedAt: nil
+        )
+        let staleUserData = try JSONEncoder().encode(staleUser)
+        UserDefaults.standard.set(staleUserData, forKey: "aurelien.currentUser")
+        UserDefaults.standard.removeObject(forKey: "aurelien.authToken")
+        AuthTokenStore.deleteValue(for: AuthTokenStore.serviceKey)
+
+        let store = AurelienStore(startBackgroundTasks: false, restorePersistedSession: false)
+
+        XCTAssertNil(store.currentUser)
+        XCTAssertNil(store.authToken)
     }
 
     func testTokenPayloadDecoderUsesPayloadSegmentAndExpirationUnits() throws {
@@ -261,6 +602,22 @@ final class CommerceHardeningTests: XCTestCase {
             .replacingOccurrences(of: "+", with: "-")
             .replacingOccurrences(of: "/", with: "_")
             .replacingOccurrences(of: "=", with: "")
+    }
+}
+
+private extension UIColor {
+    var rgbHexString: String {
+        var red: CGFloat = 0
+        var green: CGFloat = 0
+        var blue: CGFloat = 0
+        var alpha: CGFloat = 0
+        getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        return String(
+            format: "%02X%02X%02X",
+            Int(round(red * 255)),
+            Int(round(green * 255)),
+            Int(round(blue * 255))
+        )
     }
 }
 

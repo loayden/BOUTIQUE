@@ -1,15 +1,23 @@
 import Foundation
+import os
 
 enum Logger {
+    private static let runtime = os.Logger(
+        subsystem: Bundle.main.bundleIdentifier ?? "com.shereenmagdy.aurelien",
+        category: "runtime"
+    )
+
     static func debug(_ message: String) {
         #if DEBUG
-        print("[DEBUG] \(message)")
+        runtime.debug("\(message, privacy: .public)")
         #endif
     }
+
     static func error(_ message: String) {
-        print("[ERROR] \(message)")
+        runtime.error("\(message, privacy: .public)")
     }
+
     static func info(_ message: String) {
-        print("[INFO] \(message)")
+        runtime.info("\(message, privacy: .public)")
     }
 }

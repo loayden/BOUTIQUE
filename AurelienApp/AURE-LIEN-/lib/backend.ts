@@ -20,6 +20,7 @@ let mongoClientPromise: Promise<MongoClientType> | null = null
 const staticJSONCache = new Map<string, Promise<unknown>>()
 let localStateCache: { state: AppState; loadedAt: number } | null = null
 const localStateCacheTTL = Number(process.env.AURELIEN_LOCAL_STATE_CACHE_MS ?? 1000)
+const isProductionRuntime = process.env.NODE_ENV == 'production'
 
 interface AppStateDocument {
   _id: 'main'
@@ -43,6 +44,10 @@ export interface CatalogProduct {
   price: number
   images: string[]
   imageNames?: string[]
+  imageFocalPoint?: {
+    x: number
+    y: number
+  }
   size: string[]
   sizes?: string[]
   description: string
@@ -200,6 +205,26 @@ interface StoredNotification {
   isRead: boolean
 }
 
+interface StoredSavedAddress {
+  id: string
+  label: string
+  recipient: string
+  line1: string
+  apartment?: string | null
+  city: string
+  phone: string
+  isPrimary: boolean
+}
+
+interface StoredPaymentMethod {
+  id: string
+  label: string
+  brand: string
+  last4: string
+  expiry: string
+  isPrimary: boolean
+}
+
 interface DiscoverState {
   styleDNAByUser: Record<string, { style: string; palette: string; fit: string }>
   closetByUser: Record<string, string[]>
@@ -226,6 +251,9 @@ interface AppState {
   carts: StoredCart[]
   orders: StoredOrder[]
   notifications: StoredNotification[]
+  savedAddressesByUser: Record<string, StoredSavedAddress[]>
+  paymentMethodsByUser: Record<string, StoredPaymentMethod[]>
+  savedProductIDsByUser: Record<string, string[]>
   catalogProducts: CatalogProduct[]
   deletedCatalogProductIDs: string[]
   discover: DiscoverState
@@ -249,6 +277,9 @@ const emptyState: AppState = {
   carts: [],
   orders: [],
   notifications: [],
+  savedAddressesByUser: {},
+  paymentMethodsByUser: {},
+  savedProductIDsByUser: {},
   catalogProducts: [],
   deletedCatalogProductIDs: [],
   legacyClosetByUser: {},
@@ -291,15 +322,13 @@ const promoRules: Record<string, { discount: number; message: string }> = {
 }
 
 export async function getCatalog(): Promise<CatalogProduct[]> {
-  const payload = await readStaticJSON<{ products: CatalogProduct[] }>('products.json', { products: [] })
-  const state = await readState()
-  const deletedIDs = new Set(state.deletedCatalogProductIDs)
-  const createdProducts = state.catalogProducts.map(normalizeCatalogProduct)
-  const createdIDs = new Set(createdProducts.map((product) => product._id))
-  const bundledProducts = payload.products
-    .map(normalizeCatalogProduct)
-    .filter((product) => !deletedIDs.has(product._id) && !createdIDs.has(product._id))
-  return [...createdProducts, ...bundledProducts]
+  try {
+    const state = await readState()
+    return state.catalogProducts.map(normalizeCatalogProduct)
+  } catch (error) {
+    console.error('Catalog persistence unavailable; serving bundled catalog fallback.', error)
+    return bundledCatalogProducts()
+  }
 }
 
 export async function getBoutiques(): Promise<BoutiqueRecord[]> {
@@ -330,6 +359,62 @@ export async function getDiscoverContent(): Promise<DiscoverContent> {
   })
 }
 
+export async function databaseHealthSummary(): Promise<{
+  storage: 'mongodb' | 'local-json'
+  databaseName: string | null
+  reachable: boolean
+  seeded: boolean
+  error?: string
+}> {
+  const uri = process.env.AURELIEN_MONGODB_URI?.trim()
+  const databaseName = uri ? process.env.AURELIEN_MONGODB_DB?.trim() || 'aurelien' : null
+
+  if (!uri) {
+    return {
+      storage: 'local-json',
+      databaseName: null,
+      reachable: true,
+      seeded: false,
+    }
+  }
+
+  try {
+    const client = await mongoClient()
+    if (!client) {
+      return {
+        storage: 'local-json',
+        databaseName: null,
+        reachable: true,
+        seeded: false,
+      }
+    }
+
+    const database = client.db(databaseName!)
+    const ping = await database.command({ ping: 1 })
+    const seeded = Boolean(
+      await database.collection<AppStateDocument>('app_state').findOne(
+        { _id: 'main' },
+        { projection: { _id: 1 } },
+      ),
+    )
+
+    return {
+      storage: 'mongodb',
+      databaseName,
+      reachable: ping.ok === 1,
+      seeded,
+    }
+  } catch (error) {
+    return {
+      storage: 'mongodb',
+      databaseName,
+      reachable: false,
+      seeded: false,
+      error: error instanceof Error ? error.message : 'Unknown MongoDB error.',
+    }
+  }
+}
+
 export async function readState(): Promise<AppState> {
   const collection = await stateCollection()
   let state: AppState
@@ -355,18 +440,19 @@ export async function readState(): Promise<AppState> {
     state = normalizeState(await readJSON(stateFilePath, emptyState))
   }
 
-  const seededState = seedAdminUser(state)
+  let hydratedState = seedAdminUser(state)
+  hydratedState = await seedCatalogProductsIfNeeded(hydratedState)
 
-  if (seededState !== state) {
-    await writeState(seededState)
-    return seededState
+  if (hydratedState !== state) {
+    await writeState(hydratedState)
+    return hydratedState
   }
 
   if (!collection) {
-    localStateCache = { state: seededState, loadedAt: Date.now() }
+    localStateCache = { state: hydratedState, loadedAt: Date.now() }
   }
 
-  return seededState
+  return hydratedState
 }
 
 export async function writeState(state: AppState): Promise<void> {
@@ -456,6 +542,11 @@ export function enrichProductImages(request: Request, product: CatalogProduct): 
   }
 }
 
+export function commerceImageObjectPosition(product: CatalogProduct): string {
+  const focalPoint = product.imageFocalPoint ?? { x: 50, y: 18 }
+  return `${focalPoint.x}% ${focalPoint.y}%`
+}
+
 export function validateCatalogProduct(input: unknown, existingIDs: Set<string> = new Set()): CatalogProduct {
   const body = isRecord(input) ? input : {}
   const id = stringValue(body.id) || stringValue(body._id) || `product-${crypto.randomUUID()}`
@@ -469,6 +560,7 @@ export function validateCatalogProduct(input: unknown, existingIDs: Set<string> 
   const story = stringValue(body.story) || summary
   const inventory = numberValue(body.inventoryCount ?? body.inventory ?? body.stock)
   const available = booleanValue(body.isAvailable ?? body.available ?? body.inStock)
+  const imageFocalPoint = focalPointValue(body.imageFocalPoint ?? body.cardFocalPoint)
 
   if (!name) {
     throw new ProductValidationError('Product name is required.')
@@ -500,6 +592,7 @@ export function validateCatalogProduct(input: unknown, existingIDs: Set<string> 
     price,
     images,
     imageNames: images,
+    imageFocalPoint,
     size: sizes,
     sizes,
     description: summary,
@@ -545,6 +638,13 @@ export async function deleteCatalogProduct(state: AppState, productID: string): 
     return {
       ...state,
       catalogProducts: state.catalogProducts.filter((product) => product._id != cleanedID),
+      savedProductIDsByUser: Object.fromEntries(
+        Object.entries(state.savedProductIDsByUser).map(([userId, productIDs]) => [
+          userId,
+          productIDs.filter((productID) => productID != cleanedID),
+        ]),
+      ),
+      deletedCatalogProductIDs: Array.from(new Set([...state.deletedCatalogProductIDs, cleanedID])),
       carts: state.carts.map((cart) => ({
         ...cart,
         items: cart.items.filter((item) => item.productId != cleanedID),
@@ -552,19 +652,7 @@ export async function deleteCatalogProduct(state: AppState, productID: string): 
     }
   }
 
-  const bundled = await readStaticJSON<{ products: CatalogProduct[] }>('products.json', { products: [] })
-  if (!bundled.products.some((product) => product._id == cleanedID)) {
-    return null
-  }
-
-  return {
-    ...state,
-    deletedCatalogProductIDs: Array.from(new Set([...state.deletedCatalogProductIDs, cleanedID])),
-    carts: state.carts.map((cart) => ({
-      ...cart,
-      items: cart.items.filter((item) => item.productId != cleanedID),
-    })),
-  }
+  return null
 }
 
 export async function saveUploadedProductImage(file: File): Promise<string> {
@@ -938,6 +1026,11 @@ async function readStaticJSON<T>(fileName: string, fallback: T): Promise<T> {
   return promise
 }
 
+async function bundledCatalogProducts(): Promise<CatalogProduct[]> {
+  const payload = await readStaticJSON<{ products: CatalogProduct[] }>('products.json', { products: [] })
+  return payload.products.map(normalizeCatalogProduct)
+}
+
 async function readJSON<T>(filePath: string, fallback: T): Promise<T> {
   try {
     const raw = await fs.readFile(filePath, 'utf8')
@@ -950,15 +1043,16 @@ async function readJSON<T>(filePath: string, fallback: T): Promise<T> {
 async function stateCollection(): Promise<MongoStateCollectionType | null> {
   const uri = process.env.AURELIEN_MONGODB_URI?.trim()
   if (!uri) {
+    if (isProductionRuntime) {
+      throw new Error('AURELIEN_MONGODB_URI must be configured in production.')
+    }
     return null
   }
 
-  if (!mongoClientPromise) {
-    const { MongoClient } = await import('mongodb')
-    mongoClientPromise = new MongoClient(uri).connect()
+  const client = await mongoClient()
+  if (!client) {
+    return null
   }
-
-  const client = await mongoClientPromise
   const databaseName = process.env.AURELIEN_MONGODB_DB?.trim() || 'aurelien'
   return client.db(databaseName).collection<AppStateDocument>('app_state')
 }
@@ -976,15 +1070,36 @@ async function uploadedImagesCollection(): Promise<MongoUploadCollectionType | n
 async function mongoClient(): Promise<MongoClientType | null> {
   const uri = process.env.AURELIEN_MONGODB_URI?.trim()
   if (!uri) {
+    if (isProductionRuntime) {
+      throw new Error('AURELIEN_MONGODB_URI must be configured in production.')
+    }
     return null
   }
 
   if (!mongoClientPromise) {
     const { MongoClient } = await import('mongodb')
-    mongoClientPromise = new MongoClient(uri).connect()
+    mongoClientPromise = new MongoClient(uri, mongoClientOptions()).connect()
   }
 
-  return mongoClientPromise
+  try {
+    return await mongoClientPromise
+  } catch (error) {
+    mongoClientPromise = null
+    throw error
+  }
+}
+
+function mongoClientOptions() {
+  const numberFromEnv = (key: string, fallback: number) => {
+    const value = Number(process.env[key]?.trim())
+    return Number.isFinite(value) && value > 0 ? value : fallback
+  }
+
+  return {
+    maxPoolSize: numberFromEnv('AURELIEN_MONGODB_MAX_POOL_SIZE', 5),
+    serverSelectionTimeoutMS: numberFromEnv('AURELIEN_MONGODB_SERVER_SELECTION_TIMEOUT_MS', 8000),
+    connectTimeoutMS: numberFromEnv('AURELIEN_MONGODB_CONNECT_TIMEOUT_MS', 8000),
+  }
 }
 
 function normalizeState(state: Partial<AppState> | undefined): AppState {
@@ -997,6 +1112,9 @@ function normalizeState(state: Partial<AppState> | undefined): AppState {
     carts: source.carts ?? [],
     orders: source.orders ?? [],
     notifications: source.notifications ?? [],
+    savedAddressesByUser: source.savedAddressesByUser ?? {},
+    paymentMethodsByUser: source.paymentMethodsByUser ?? {},
+    savedProductIDsByUser: source.savedProductIDsByUser ?? {},
     catalogProducts: (source.catalogProducts ?? []).map(normalizeCatalogProduct),
     deletedCatalogProductIDs: source.deletedCatalogProductIDs ?? [],
     legacyClosetByUser: source.legacyClosetByUser ?? {},
@@ -1015,6 +1133,23 @@ function normalizeState(state: Partial<AppState> | undefined): AppState {
   }
 }
 
+async function seedCatalogProductsIfNeeded(state: AppState): Promise<AppState> {
+  if (state.catalogProducts.length > 0) {
+    return state
+  }
+
+  const deletedIDs = new Set(state.deletedCatalogProductIDs)
+  const bundledProducts = (await bundledCatalogProducts()).filter((product) => !deletedIDs.has(product._id))
+  if (!bundledProducts.length) {
+    return state
+  }
+
+  return {
+    ...state,
+    catalogProducts: bundledProducts,
+  }
+}
+
 function normalizeCatalogProduct(product: CatalogProduct): CatalogProduct {
   const images = stringArrayValue(product.imageNames ?? product.images)
   const sizes = stringArrayValue(product.sizes ?? product.size)
@@ -1022,6 +1157,7 @@ function normalizeCatalogProduct(product: CatalogProduct): CatalogProduct {
   const summary = product.summary || product.description || product.name
   const inventory = product.inventoryCount ?? product.inventory ?? product.stock
   const available = product.isAvailable ?? product.available ?? product.inStock
+  const imageFocalPoint = focalPointValue(product.imageFocalPoint) ?? { x: 50, y: 18 }
 
   return {
     ...product,
@@ -1029,6 +1165,7 @@ function normalizeCatalogProduct(product: CatalogProduct): CatalogProduct {
     id: product.id || product._id,
     images,
     imageNames: images,
+    imageFocalPoint,
     size: sizes,
     sizes,
     description: summary,
@@ -1077,6 +1214,23 @@ function booleanValue(value: unknown): boolean | undefined {
     }
   }
   return undefined
+}
+
+function focalPointValue(value: unknown): { x: number; y: number } | undefined {
+  if (!isRecord(value)) {
+    return undefined
+  }
+
+  const x = numberValue(value.x)
+  const y = numberValue(value.y)
+  if (x == null || y == null) {
+    return undefined
+  }
+
+  return {
+    x: Math.min(100, Math.max(0, x)),
+    y: Math.min(100, Math.max(0, y)),
+  }
 }
 
 function stringArrayValue(value: unknown): string[] {
@@ -1200,7 +1354,48 @@ function seedAdminUser(state: AppState): AppState {
 
   const existingAdmin = state.users.find((user) => user.email == adminEmail)
   if (existingAdmin) {
-    return state
+    const passwordIsCurrent = verifyPassword(adminPassword, existingAdmin.passwordHash)
+    const needsHashUpgrade = passwordHashNeedsUpgrade(existingAdmin.passwordHash)
+    const shouldUpdateUser =
+      !existingAdmin.isAdmin ||
+      !passwordIsCurrent ||
+      needsHashUpgrade ||
+      existingAdmin.name != 'BOUTIQUE Administrator'
+
+    const nextAdminUser: StoredUser = shouldUpdateUser
+      ? {
+          ...createUserRecord({
+            name: 'BOUTIQUE Administrator',
+            email: adminEmail,
+            password: adminPassword,
+            phone: existingAdmin.phone ?? null,
+            isAdmin: true,
+          }),
+          id: existingAdmin.id,
+          createdAt: existingAdmin.createdAt,
+        }
+      : existingAdmin
+
+    const nextProfile = defaultProfileForUser(nextAdminUser)
+    const profileNeedsUpdate = !state.profiles.some((profile) =>
+      profile.userId == nextAdminUser.id &&
+      profile.email == nextProfile.email &&
+      profile.name == nextProfile.name &&
+      profile.tier == nextProfile.tier,
+    )
+
+    if (!shouldUpdateUser && !profileNeedsUpdate) {
+      return state
+    }
+
+    return {
+      ...state,
+      users: state.users.map((user) => (user.id == existingAdmin.id ? nextAdminUser : user)),
+      profiles: [
+        nextProfile,
+        ...state.profiles.filter((profile) => profile.userId != nextAdminUser.id),
+      ],
+    }
   }
 
   const adminUser = createUserRecord({

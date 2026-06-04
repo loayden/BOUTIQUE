@@ -18,6 +18,7 @@ import {
   getDiscoverContent,
   getLegalContent,
   getSupportContent,
+  databaseHealthSummary,
   issueToken,
   normalizeOrderStatus,
   normalizeText,
@@ -43,6 +44,7 @@ import {
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
+const experimentalCommerceEndpointsEnabled = configuredBoolean('AURELIEN_ENABLE_EXPERIMENTAL_ENDPOINTS')
 
 type RouteContext = {
   params: Promise<{
@@ -94,6 +96,25 @@ type RouteUser = NonNullable<Awaited<ReturnType<typeof authenticatedUser>>>
 export async function GET(request: Request, context: RouteContext) {
   const segments = await resolvedSegments(context)
 
+  if (isExperimentalCommerceRoute(segments) && !experimentalCommerceEndpointsEnabled) {
+    return jsonError('This content is not available right now.', 404)
+  }
+
+  if (segments[0] == 'health') {
+    const database = await databaseHealthSummary()
+    return NextResponse.json({
+      ok: database.reachable,
+      service: 'BOUTIQUE API',
+      storage: database.storage,
+      database,
+    }, {
+      status: database.reachable ? 200 : 503,
+      headers: {
+        'Cache-Control': 'no-store',
+      },
+    })
+  }
+
   if (segments[0] == 'uploads' && segments[1] == 'product-image' && segments[2]) {
     const image = await readUploadedProductImage(segments[2])
     if (!image) {
@@ -110,9 +131,9 @@ export async function GET(request: Request, context: RouteContext) {
 
   if (segments[0] == 'products' && segments.length == 1) {
     const catalog = await getCatalog()
-    return publicJSON({
+    return dynamicJSON({
       products: catalog.map((product) => enrichProductImages(request, product)),
-    }, 30)
+    })
   }
 
   if (segments[0] == 'products' && segments.length == 2) {
@@ -121,7 +142,7 @@ export async function GET(request: Request, context: RouteContext) {
     if (!product) {
       return jsonError('Product not found.', 404)
     }
-    return publicJSON(enrichProductImages(request, product), 30)
+    return dynamicJSON(enrichProductImages(request, product))
   }
 
   if (segments[0] == 'products' && segments[2] == 'related') {
@@ -134,7 +155,7 @@ export async function GET(request: Request, context: RouteContext) {
       .filter((item) => item._id != product._id && item.category == product.category)
       .slice(0, 6)
       .map((item) => enrichProductImages(request, item))
-    return publicJSON(related, 60)
+    return dynamicJSON(related)
   }
 
   if (
@@ -160,7 +181,7 @@ export async function GET(request: Request, context: RouteContext) {
 
   if (segments[0] == 'boutique' && segments[1] == 'products') {
     const catalog = await getCatalog()
-    return publicJSON(
+    return dynamicJSON(
       catalog.map((product) => ({
         id: product._id,
         name: product.name,
@@ -171,8 +192,12 @@ export async function GET(request: Request, context: RouteContext) {
         boutiqueId: 'aurelien-curated-house',
         description: product.description,
       })),
-      30,
     )
+  }
+
+  if (segments[0] == 'support' && segments.length == 1) {
+    const support = await getSupportContent()
+    return publicJSON(support, 300)
   }
 
   if (segments[0] == 'support' && segments[1] == 'channels') {
@@ -185,9 +210,23 @@ export async function GET(request: Request, context: RouteContext) {
     return publicJSON(support.faqs, 300)
   }
 
+  if (segments[0] == 'legal' && segments.length == 1) {
+    const legal = await getLegalContent()
+    return publicJSON(legal, 300)
+  }
+
   if (segments[0] == 'legal' && segments[1] == 'documents') {
     const legal = await getLegalContent()
     return publicJSON(legal.documents, 300)
+  }
+
+  if (segments[0] == 'legal' && segments.length == 2) {
+    const legal = await getLegalContent()
+    const document = legal.documents.find((item) => item.id == segments[1])
+    if (!document) {
+      return jsonError('Legal document not found.', 404)
+    }
+    return publicJSON(document, 300)
   }
 
   if (segments[0] == 'discover' && segments[1] == 'feed') {
@@ -223,8 +262,22 @@ export async function GET(request: Request, context: RouteContext) {
     return publicJSON(discover.subscriptionPlans, 120)
   }
 
+  if (isProtectedGetRoute(segments) && !hasAuthorizationToken(request)) {
+    return jsonError('Unauthorized', 401)
+  }
+
   const state = await readState()
   const user = await authenticatedUser(request)
+
+  if (segments[0] == 'account' && segments.length == 1) {
+    if (!user) {
+      return jsonError('Unauthorized', 401)
+    }
+    return NextResponse.json({
+      user: publicUser(user),
+      profile: publicProfile(findProfile(state, user)),
+    })
+  }
 
   if (segments[0] == 'discover' && segments[1] == 'leaderboard') {
     return NextResponse.json(discoverLeaderboardFromState(state))
@@ -301,6 +354,16 @@ export async function GET(request: Request, context: RouteContext) {
     return NextResponse.json(notifications)
   }
 
+  if (segments[0] == 'wallet') {
+    if (!user) {
+      return jsonError('Unauthorized', 401)
+    }
+    return NextResponse.json({
+      savedAddresses: state.savedAddressesByUser[user.id] ?? [],
+      paymentMethods: state.paymentMethodsByUser[user.id] ?? [],
+    })
+  }
+
   if (segments[0] == 'social' && segments[1] == 'users') {
     const customers = state.users.filter((item) => !item.isAdmin)
     return NextResponse.json(
@@ -359,7 +422,18 @@ export async function GET(request: Request, context: RouteContext) {
   }
 
   if (segments[0] == 'saved' && segments[1] == 'me') {
-    return NextResponse.json([])
+    if (!user) {
+      return jsonError('Unauthorized', 401)
+    }
+    const catalogById = new Map(
+      (await getCatalog()).map((product) => [product._id, product] as const),
+    )
+    const products = (state.savedProductIDsByUser[user.id] ?? [])
+      .flatMap((productId) => {
+        const product = catalogById.get(productId)
+        return product ? [enrichProductImages(request, product)] : []
+      })
+    return NextResponse.json({ products })
   }
 
   if (segments[0] == 'cart') {
@@ -440,20 +514,55 @@ export async function GET(request: Request, context: RouteContext) {
 
 export async function POST(request: Request, context: RouteContext) {
   const segments = await resolvedSegments(context)
+
+  if (isExperimentalCommerceRoute(segments) && !experimentalCommerceEndpointsEnabled) {
+    return jsonError('This action is not available right now.', 404)
+  }
+
+  if (isProtectedPostRoute(segments) && !hasAuthorizationToken(request)) {
+    return jsonError('Unauthorized', 401)
+  }
+
+  if (segments[0] == 'orders' && segments[1] == 'validate-cod') {
+    const body = (await request.json().catch(() => null)) as { governorate?: string } | null
+    if (!body?.governorate?.trim()) {
+      return jsonError('Governorate is required.', 400)
+    }
+    return NextResponse.json(codResult(body.governorate))
+  }
+
+  if (segments[0] == 'orders' && segments[1] == 'validate-promo') {
+    const body = (await request.json().catch(() => null)) as { code?: string } | null
+    return NextResponse.json(promoResult(body?.code ?? ''))
+  }
+
   const state = await readState()
   const user = await authenticatedUser(request)
 
   if (segments[0] == 'auth' && segments[1] == 'signup') {
     const body = (await request.json().catch(() => null)) as
-      | { name?: string; email?: string; password?: string; phone?: string | null }
+      | { name?: string; email?: string; password?: string; confirmPassword?: string; phone?: string | null }
       | null
 
     const name = body?.name?.trim()
     const email = body?.email?.trim().toLowerCase()
     const password = body?.password?.trim()
+    const confirmPassword = body?.confirmPassword?.trim()
 
     if (!name || !email || !password) {
       return jsonError('Name, email, and password are required.', 400)
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return jsonError('Enter a valid email address.', 400)
+    }
+
+    if (password.length < 8) {
+      return jsonError('Use a password with at least 8 characters.', 400)
+    }
+
+    if (confirmPassword != null && confirmPassword != password) {
+      return jsonError('Password confirmation does not match.', 400)
     }
 
     if (state.users.some((candidate) => candidate.email == email)) {
@@ -480,7 +589,7 @@ export async function POST(request: Request, context: RouteContext) {
     })
   }
 
-  if (segments[0] == 'auth' && segments[1] == 'signin') {
+  if (segments[0] == 'auth' && (segments[1] == 'signin' || segments[1] == 'login')) {
     const body = (await request.json().catch(() => null)) as
       | { email?: string; password?: string }
       | null
@@ -547,6 +656,23 @@ export async function POST(request: Request, context: RouteContext) {
     })
   }
 
+  if (segments[0] == 'account' && segments[1] == 'delete') {
+    if (!user) {
+      return jsonError('Unauthorized', 401)
+    }
+
+    const targetUser = state.users.find((item) => item.id == user.id)
+    if (targetUser?.isAdmin) {
+      const remainingAdmins = state.users.filter((item) => item.isAdmin && item.id != user.id)
+      if (remainingAdmins.length == 0) {
+        return jsonError('At least one administrator account must remain.', 409)
+      }
+    }
+
+    await writeState(deleteUserOwnedState(state, user.id))
+    return NextResponse.json({ success: true })
+  }
+
   if (segments[0] == 'uploads' && segments[1] == 'product-image') {
     if (!user?.isAdmin) {
       return jsonError('Unauthorized', 401)
@@ -586,17 +712,93 @@ export async function POST(request: Request, context: RouteContext) {
     }
   }
 
-  if (segments[0] == 'orders' && segments[1] == 'validate-cod') {
-    const body = (await request.json().catch(() => null)) as { governorate?: string } | null
-    if (!body?.governorate?.trim()) {
-      return jsonError('Governorate is required.', 400)
+  if (segments[0] == 'saved' && segments[1] == 'me') {
+    if (!user) {
+      return jsonError('Unauthorized', 401)
     }
-    return NextResponse.json(codResult(body.governorate))
+
+    const body = (await request.json().catch(() => null)) as { productId?: string } | null
+    const productId = body?.productId?.trim()
+    if (!productId) {
+      return jsonError('Product ID is required.', 400)
+    }
+
+    const catalog = await getCatalog()
+    if (!catalog.some((product) => product._id == productId)) {
+      return jsonError('Product not found.', 404)
+    }
+
+    const nextState = {
+      ...state,
+      savedProductIDsByUser: {
+        ...state.savedProductIDsByUser,
+        [user.id]: Array.from(new Set([productId, ...(state.savedProductIDsByUser[user.id] ?? [])])),
+      },
+    }
+    await writeState(nextState)
+
+    const catalogById = new Map(catalog.map((product) => [product._id, product] as const))
+    const products = (nextState.savedProductIDsByUser[user.id] ?? [])
+      .flatMap((savedId) => {
+        const product = catalogById.get(savedId)
+        return product ? [enrichProductImages(request, product)] : []
+      })
+    return NextResponse.json({ products }, { status: 201 })
   }
 
-  if (segments[0] == 'orders' && segments[1] == 'validate-promo') {
-    const body = (await request.json().catch(() => null)) as { code?: string } | null
-    return NextResponse.json(promoResult(body?.code ?? ''))
+  if (segments[0] == 'wallet' && segments[1] == 'addresses') {
+    if (!user) {
+      return jsonError('Unauthorized', 401)
+    }
+
+    const body = (await request.json().catch(() => null)) as {
+      id?: string
+      label?: string
+      recipient?: string
+      line1?: string
+      apartment?: string | null
+      city?: string
+      phone?: string
+      isPrimary?: boolean
+    } | null
+
+    const label = body?.label?.trim() ?? ''
+    const recipient = body?.recipient?.trim() ?? ''
+    const line1 = body?.line1?.trim() ?? ''
+    const city = body?.city?.trim() ?? ''
+    const phone = body?.phone?.trim() ?? ''
+
+    if (!label || !recipient || !line1 || !city || !phone) {
+      return jsonError('Complete address details are required.', 400)
+    }
+
+    const existingAddresses = state.savedAddressesByUser[user.id] ?? []
+    const nextAddress = {
+      id: body?.id?.trim() || `address-${crypto.randomUUID()}`,
+      label,
+      recipient,
+      line1,
+      apartment: body?.apartment?.trim() || null,
+      city,
+      phone,
+      isPrimary: body?.isPrimary == true || existingAddresses.length == 0,
+    }
+
+    const nextAddresses = [
+      nextAddress,
+      ...existingAddresses
+        .filter((address) => address.id != nextAddress.id)
+        .map((address) => nextAddress.isPrimary ? { ...address, isPrimary: false } : address),
+    ]
+
+    await writeState({
+      ...state,
+      savedAddressesByUser: {
+        ...state.savedAddressesByUser,
+        [user.id]: nextAddresses,
+      },
+    })
+    return NextResponse.json({ savedAddresses: nextAddresses }, { status: 201 })
   }
 
   if (segments[0] == 'cart') {
@@ -615,6 +817,10 @@ export async function POST(request: Request, context: RouteContext) {
     const productId = body.productId.trim()
     const catalog = await getCatalog()
     const product = catalog.find((candidate) => candidate._id == productId)
+    const selectionProblem = catalogSelectionProblem(product, body.size, body.color)
+    if (selectionProblem) {
+      return jsonError(selectionProblem, 400)
+    }
     const stockProblem = catalogStockProblem(product, body.quantity)
     if (stockProblem) {
       return jsonError(stockProblem, 409)
@@ -741,9 +947,17 @@ export async function POST(request: Request, context: RouteContext) {
       }
     }
 
+    const orderId = body.id?.trim() || `order-${Date.now()}`
+    if (state.orders.some((order) => order.id == orderId)) {
+      return jsonError('Order id already exists.', 409)
+    }
+
     const orderItems = body.items.flatMap((item) => {
       const product = catalog.find((candidate) => candidate._id == item.productId?.trim())
       if (!product) {
+        return []
+      }
+      if (catalogSelectionProblem(product, item.size, item.color)) {
         return []
       }
 
@@ -781,7 +995,6 @@ export async function POST(request: Request, context: RouteContext) {
     const totalPrice = Math.max(subtotal + shippingCost + codFee - discount, 0)
 
     const createdAt = new Date().toISOString()
-    const orderId = body.id?.trim() || `order-${Date.now()}`
 
     const nextOrder = {
       id: orderId,
@@ -1266,11 +1479,66 @@ export async function POST(request: Request, context: RouteContext) {
 
 export async function PUT(request: Request, context: RouteContext) {
   const segments = await resolvedSegments(context)
+
+  if (isExperimentalCommerceRoute(segments) && !experimentalCommerceEndpointsEnabled) {
+    return jsonError('This action is not available right now.', 404)
+  }
+
+  if (!hasAuthorizationToken(request)) {
+    return jsonError('Unauthorized', 401)
+  }
+
   const state = await readState()
   const user = await authenticatedUser(request)
 
   if (!user) {
     return jsonError('Unauthorized', 401)
+  }
+
+  if (segments[0] == 'notifications' && segments[2] == 'read') {
+    const notificationId = segments[1]?.trim()
+    if (!notificationId) {
+      return jsonError('Notification ID is required.', 400)
+    }
+
+    if (!state.notifications.some((item) => item.userId == user.id && item.id == notificationId)) {
+      return jsonError('Notification not found.', 404)
+    }
+
+    const nextState = {
+      ...state,
+      notifications: state.notifications.map((item) =>
+        item.userId == user.id && item.id == notificationId ? { ...item, isRead: true } : item,
+      ),
+    }
+    await writeState(nextState)
+    return NextResponse.json({ success: true })
+  }
+
+  if (segments[0] == 'wallet' && segments[1] == 'addresses' && segments[3] == 'primary') {
+    const addressId = segments[2]?.trim()
+    if (!addressId) {
+      return jsonError('Address ID is required.', 400)
+    }
+
+    const currentAddresses = state.savedAddressesByUser[user.id] ?? []
+    if (!currentAddresses.some((address) => address.id == addressId)) {
+      return jsonError('Address not found.', 404)
+    }
+
+    const nextAddresses = currentAddresses.map((address) => ({
+      ...address,
+      isPrimary: address.id == addressId,
+    }))
+
+    await writeState({
+      ...state,
+      savedAddressesByUser: {
+        ...state.savedAddressesByUser,
+        [user.id]: nextAddresses,
+      },
+    })
+    return NextResponse.json({ savedAddresses: nextAddresses })
   }
 
   if (segments[0] == 'cart') {
@@ -1285,6 +1553,10 @@ export async function PUT(request: Request, context: RouteContext) {
     const productId = body.productId.trim()
     const catalog = await getCatalog()
     const product = catalog.find((candidate) => candidate._id == productId)
+    const selectionProblem = catalogSelectionProblem(product, body.size, body.color)
+    if (selectionProblem) {
+      return jsonError(selectionProblem, 400)
+    }
     const stockProblem = catalogStockProblem(product, body.quantity)
     if (stockProblem) {
       return jsonError(stockProblem, 409)
@@ -1409,18 +1681,50 @@ export async function PUT(request: Request, context: RouteContext) {
       | { name?: string; email?: string; tier?: string; city?: string; note?: string }
       | null
 
+    const nextName = body?.name?.trim() || user.name
+    const nextEmail = body?.email?.trim().toLowerCase() || user.email
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nextEmail)) {
+      return jsonError('Enter a valid email address.', 400)
+    }
+
+    if (state.users.some((candidate) => candidate.id != user.id && candidate.email == nextEmail)) {
+      return jsonError('An account already exists for this email address.', 409)
+    }
+
     const nextProfile = {
       userId: user.id,
-      name: body?.name?.trim() || user.name,
-      email: body?.email?.trim().toLowerCase() || user.email,
+      name: nextName,
+      email: nextEmail,
       tier: body?.tier?.trim() || (user.isAdmin ? 'Administrator' : 'Member'),
       city: body?.city?.trim() || 'Cairo',
       note: body?.note?.trim() || 'Manage your account preferences and order activity.',
     }
 
-    const nextState = upsertProfile(state, nextProfile)
+    const nextState = upsertProfile({
+      ...state,
+      users: state.users.map((candidate) =>
+        candidate.id == user.id
+          ? {
+              ...candidate,
+              name: nextName,
+              email: nextEmail,
+              updatedAt: new Date().toISOString(),
+            }
+          : candidate,
+      ),
+    }, nextProfile)
     await writeState(nextState)
-    return NextResponse.json({ profile: publicProfile(nextProfile) })
+    return NextResponse.json({
+      profile: publicProfile(nextProfile),
+      user: publicUser(
+        nextState.users.find((candidate) => candidate.id == user.id) ?? {
+          ...user,
+          name: nextName,
+          email: nextEmail,
+        },
+      ),
+    })
   }
 
   if (segments[0] == 'discover' && segments[1] == 'style-dna') {
@@ -1456,8 +1760,124 @@ export async function PATCH(request: Request, context: RouteContext) {
 
 export async function DELETE(request: Request, context: RouteContext) {
   const segments = await resolvedSegments(context)
+
+  if (isExperimentalCommerceRoute(segments) && !experimentalCommerceEndpointsEnabled) {
+    return jsonError('This action is not available right now.', 404)
+  }
+
+  if (!hasAuthorizationToken(request)) {
+    return jsonError('Unauthorized', 401)
+  }
+
   const state = await readState()
   const user = await authenticatedUser(request)
+
+  if (segments[0] == 'account' && segments[1] == 'delete') {
+    if (!user) {
+      return jsonError('Unauthorized', 401)
+    }
+
+    const targetUser = state.users.find((item) => item.id == user.id)
+    if (targetUser?.isAdmin) {
+      const remainingAdmins = state.users.filter((item) => item.isAdmin && item.id != user.id)
+      if (remainingAdmins.length == 0) {
+        return jsonError('At least one administrator account must remain.', 409)
+      }
+    }
+
+    await writeState(deleteUserOwnedState(state, user.id))
+    return NextResponse.json({ success: true })
+  }
+
+  if (segments[0] == 'users' && segments[1]) {
+    if (!user) {
+      return jsonError('Unauthorized', 401)
+    }
+
+    const targetUserId = segments[1] == 'me' ? user.id : segments[1]
+    if (!user.isAdmin && targetUserId != user.id) {
+      return jsonError('Unauthorized', 401)
+    }
+
+    const targetUser = state.users.find((item) => item.id == targetUserId)
+    if (targetUser?.isAdmin) {
+      const remainingAdmins = state.users.filter((item) => item.isAdmin && item.id != targetUserId)
+      if (remainingAdmins.length == 0) {
+        return jsonError('At least one administrator account must remain.', 409)
+      }
+    }
+
+    await writeState(deleteUserOwnedState(state, targetUserId))
+    return NextResponse.json({ success: true })
+  }
+
+  if (segments[0] == 'notifications' && segments[1]) {
+    if (!user) {
+      return jsonError('Unauthorized', 401)
+    }
+
+    await writeState({
+      ...state,
+      notifications: state.notifications.filter(
+        (item) => !(item.userId == user.id && item.id == segments[1]),
+      ),
+    })
+    return NextResponse.json({ success: true })
+  }
+
+  if (segments[0] == 'wallet' && segments[1] == 'addresses' && segments[2]) {
+    if (!user) {
+      return jsonError('Unauthorized', 401)
+    }
+
+    const addressId = segments[2].trim()
+    const currentAddresses = state.savedAddressesByUser[user.id] ?? []
+    const deletedWasPrimary = currentAddresses.some((address) => address.id == addressId && address.isPrimary)
+    let nextAddresses = currentAddresses.filter((address) => address.id != addressId)
+    if (deletedWasPrimary && nextAddresses.length > 0) {
+      nextAddresses = nextAddresses.map((address, index) => ({
+        ...address,
+        isPrimary: index == 0,
+      }))
+    }
+
+    await writeState({
+      ...state,
+      savedAddressesByUser: {
+        ...state.savedAddressesByUser,
+        [user.id]: nextAddresses,
+      },
+    })
+    return NextResponse.json({ savedAddresses: nextAddresses })
+  }
+
+  if (segments[0] == 'saved' && segments[1] == 'me') {
+    if (!user) {
+      return jsonError('Unauthorized', 401)
+    }
+
+    const body = (await request.json().catch(() => null)) as { productId?: string } | null
+    const productId = body?.productId?.trim()
+    const nextProductIDs = productId
+      ? (state.savedProductIDsByUser[user.id] ?? []).filter((savedId) => savedId != productId)
+      : []
+
+    const nextState = {
+      ...state,
+      savedProductIDsByUser: {
+        ...state.savedProductIDsByUser,
+        [user.id]: nextProductIDs,
+      },
+    }
+    await writeState(nextState)
+
+    const catalogById = new Map((await getCatalog()).map((product) => [product._id, product] as const))
+    const products = nextProductIDs.flatMap((savedId) => {
+      const product = catalogById.get(savedId)
+      return product ? [enrichProductImages(request, product)] : []
+    })
+    return NextResponse.json({ products })
+  }
 
   if (segments[0] == 'cart') {
     if (!user) {
@@ -1572,10 +1992,91 @@ function jsonError(message: string, status: number) {
   return NextResponse.json({ message }, { status })
 }
 
+function deleteUserOwnedState(state: RouteState, targetUserId: string): RouteState {
+  const releasableOrderItems = state.orders
+    .filter((item) =>
+      item.userId == targetUserId &&
+      ['pending', 'confirmed', 'preparing'].includes(item.status),
+    )
+    .flatMap((order) =>
+      order.items.map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+      })),
+    )
+  const stockAdjustedState = releasableOrderItems.length
+    ? releaseCatalogStock(state, releasableOrderItems)
+    : state
+
+  return {
+    ...stockAdjustedState,
+    users: stockAdjustedState.users.filter((item) => item.id != targetUserId),
+    profiles: stockAdjustedState.profiles.filter((item) => item.userId != targetUserId),
+    carts: stockAdjustedState.carts.filter((item) => item.userId != targetUserId),
+    orders: stockAdjustedState.orders.filter((item) => item.userId != targetUserId),
+    notifications: stockAdjustedState.notifications.filter((item) => item.userId != targetUserId),
+    savedAddressesByUser: Object.fromEntries(
+      Object.entries(stockAdjustedState.savedAddressesByUser).filter(([key]) => key != targetUserId),
+    ),
+    paymentMethodsByUser: Object.fromEntries(
+      Object.entries(stockAdjustedState.paymentMethodsByUser).filter(([key]) => key != targetUserId),
+    ),
+    savedProductIDsByUser: Object.fromEntries(
+      Object.entries(stockAdjustedState.savedProductIDsByUser).filter(([key]) => key != targetUserId),
+    ),
+    legacyClosetByUser: Object.fromEntries(
+      Object.entries(stockAdjustedState.legacyClosetByUser).filter(([key]) => key != targetUserId),
+    ),
+    discover: {
+      ...stockAdjustedState.discover,
+      styleDNAByUser: Object.fromEntries(
+        Object.entries(stockAdjustedState.discover.styleDNAByUser).filter(([key]) => key != targetUserId),
+      ),
+      closetByUser: Object.fromEntries(
+        Object.entries(stockAdjustedState.discover.closetByUser).filter(([key]) => key != targetUserId),
+      ),
+      likedOutfitsByUser: Object.fromEntries(
+        Object.entries(stockAdjustedState.discover.likedOutfitsByUser).filter(([key]) => key != targetUserId),
+      ),
+      savedOutfitsByUser: Object.fromEntries(
+        Object.entries(stockAdjustedState.discover.savedOutfitsByUser).filter(([key]) => key != targetUserId),
+      ),
+      followedCreatorsByUser: Object.fromEntries(
+        Object.entries(stockAdjustedState.discover.followedCreatorsByUser).filter(([key]) => key != targetUserId),
+      ),
+      waitlists: Object.fromEntries(
+        Object.entries(stockAdjustedState.discover.waitlists).map(([key, values]) => [
+          key,
+          values.filter((value) => value != targetUserId),
+        ]),
+      ),
+      votesByChallenge: Object.fromEntries(
+        Object.entries(stockAdjustedState.discover.votesByChallenge).map(([key, values]) => [
+          key,
+          values.filter((value) => value != targetUserId),
+        ]),
+      ),
+      subscriptionAssignments: stockAdjustedState.discover.subscriptionAssignments.filter(
+        (item) => item.userId != targetUserId,
+      ),
+      boosts: stockAdjustedState.discover.boosts.filter((item) => item.userId != targetUserId),
+      tryBeforeBuy: stockAdjustedState.discover.tryBeforeBuy.filter((item) => item.userId != targetUserId),
+    },
+  }
+}
+
 function publicJSON(payload: unknown, maxAgeSeconds: number) {
   return NextResponse.json(payload, {
     headers: {
       'Cache-Control': `public, max-age=0, s-maxage=${maxAgeSeconds}, stale-while-revalidate=86400`,
+    },
+  })
+}
+
+function dynamicJSON(payload: unknown) {
+  return NextResponse.json(payload, {
+    headers: {
+      'Cache-Control': 'no-store',
     },
   })
 }
@@ -1587,6 +2088,135 @@ function validationError(error: unknown) {
 
   console.error(error)
   return jsonError('This action could not be completed right now.', 500)
+}
+
+function configuredBoolean(name: string): boolean {
+  const rawValue = process.env[name]?.trim().toLowerCase()
+  return rawValue == '1' || rawValue == 'true' || rawValue == 'yes' || rawValue == 'on'
+}
+
+function hasAuthorizationToken(request: Request): boolean {
+  const header = request.headers.get('authorization') ?? ''
+  return header.replace(/^Bearer\s+/i, '').trim().length > 0
+}
+
+function isProtectedGetRoute(segments: string[]): boolean {
+  if (segments.length == 0) {
+    return false
+  }
+
+  if (segments[0] == 'admin' || segments[0] == 'account') {
+    return true
+  }
+
+  if (segments[0] == 'profile' || segments[0] == 'notifications' || segments[0] == 'wallet') {
+    return true
+  }
+
+  if (segments[0] == 'users' && segments[1] == 'me') {
+    return true
+  }
+
+  if (
+    segments[0] == 'discover' &&
+    ['me', 'state', 'closet', 'style-dna'].includes(segments[1] ?? '')
+  ) {
+    return true
+  }
+
+  if (segments[0] == 'gamification' && segments[1] == 'me') {
+    return true
+  }
+
+  if (segments[0] == 'closet' || segments[0] == 'cart' || segments[0] == 'orders') {
+    return true
+  }
+
+  if (segments[0] == 'saved' && segments[1] == 'me') {
+    return true
+  }
+
+  return false
+}
+
+function isProtectedPostRoute(segments: string[]): boolean {
+  if (segments.length == 0) {
+    return false
+  }
+
+  if (segments[0] == 'auth') {
+    return segments[1] == 'refresh'
+  }
+
+  if (segments[0] == 'orders' && (segments[1] == 'validate-cod' || segments[1] == 'validate-promo')) {
+    return false
+  }
+
+  return true
+}
+
+function isExperimentalCommerceRoute(segments: string[]): boolean {
+  if (segments.length == 0) {
+    return false
+  }
+
+  if (segments[0] == 'social' || segments[0] == 'gamification' || segments[0] == 'closet') {
+    return true
+  }
+
+  if (segments[0] == 'trybeforebuy' || segments[0] == 'subscription') {
+    return true
+  }
+
+  if (segments[0] == 'product' && segments[1] == 'boost') {
+    return true
+  }
+
+  if (segments[0] != 'discover') {
+    return false
+  }
+
+  switch (segments[1]) {
+  case 'challenges':
+  case 'leaderboard':
+  case 'closet':
+  case 'subscription':
+  case 'seller-boost':
+  case 'try-before-buy':
+    return true
+  case 'drops':
+    return segments[3] == 'waitlist'
+  default:
+    return false
+  }
+}
+
+function catalogSelectionProblem(
+  product: CatalogProduct | undefined,
+  size: string | null | undefined,
+  color: string | null | undefined,
+): string | null {
+  if (!product) {
+    return 'Product not found.'
+  }
+
+  const requestedSize = size?.trim()
+  if (
+    requestedSize &&
+    product.size.some((candidate) => normalizeText(candidate) == normalizeText(requestedSize)) == false
+  ) {
+    return 'Choose an available size.'
+  }
+
+  const requestedColor = color?.trim()
+  if (
+    requestedColor &&
+    product.colors.some((candidate) => normalizeText(candidate) == normalizeText(requestedColor)) == false
+  ) {
+    return 'Choose an available color.'
+  }
+
+  return null
 }
 
 function discoverMoodKeywords(query: string): string[] {

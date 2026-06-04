@@ -8,43 +8,31 @@ struct DiscoverView: View {
     @SceneStorage("discover.feed.index") private var currentIndex = 0
 
     @AppStorage("discover.points") private var points = 0
-    @AppStorage("discover.daily_streak") private var dailyStreak = 1
     @AppStorage("discover.style_dna") private var styleDNA = "Minimal Tailored"
 
     @State private var outfits: [DiscoverOutfit] = []
     @State private var drops: [DiscoverDropData] = []
-    @State private var challenges: [DiscoverChallengeData] = []
-    @State private var leaderboard: [DiscoverLeaderboardData] = []
     @State private var isLoading = true
     @State private var isRefreshing = false
     @State private var errorMessage: String?
 
     @State private var likedOutfitIDs: Set<String> = []
     @State private var savedOutfitIDs: Set<String> = []
-    @State private var followedCreatorIDs: Set<String> = []
 
     @State private var discoverUserState = DiscoverUserState.empty
-    @State private var selectedChallengeID: String?
-    @State private var dropWaitlist: Set<String> = []
-    @State private var votedChallengeIDs: Set<String> = []
-    @State private var pendingDropJoin: Set<String> = []
-    @State private var isVotingInChallenge = false
 
     @State private var activeSheet: DiscoverFeatureSheet?
     @State private var sharePayload: DiscoverSharePayload?
     @State private var lastInteractionAt = Date.distantPast
 
     private var surface: DiscoverSurface {
-        get { DiscoverSurface(rawValue: surfaceRaw) ?? .feed }
-        nonmutating set { surfaceRaw = newValue.rawValue }
-    }
-
-    private var selectedChallenge: DiscoverChallengeData? {
-        if let selectedChallengeID,
-           let challenge = challenges.first(where: { $0.id == selectedChallengeID }) {
-            return challenge
+        get {
+            guard let resolved = DiscoverSurface(rawValue: surfaceRaw) else {
+                return .feed
+            }
+            return resolved
         }
-        return challenges.first
+        nonmutating set { surfaceRaw = newValue.rawValue }
     }
 
     private var discoverProducts: [Product] {
@@ -71,18 +59,14 @@ struct DiscoverView: View {
         drops.filter { ($0.unlocksAt ?? .distantPast) <= Date() }.count
     }
 
-    private var creatorCount: Int {
-        Set(outfits.map(\.creatorID)).count
-    }
-
     private var discoverMomentumCopy: String {
         if let currentOutfit {
             return "Featuring \(currentOutfit.creatorName) with \(currentOutfit.products.count) shoppable pieces."
         }
         if drops.isEmpty == false {
-            return "\(drops.count) live and upcoming drops are ready for early access."
+            return "\(drops.count) live and upcoming drops are ready to shop."
         }
-        return "Editorial outfits, drops, and community signals refresh from the live catalog."
+        return "Editorial outfits and launch highlights refresh from the live catalog."
     }
 
     var body: some View {
@@ -105,8 +89,6 @@ struct DiscoverView: View {
                         feedSurface(viewport: viewport, contentWidth: contentWidth)
                     case .drops:
                         dropsSurface(contentWidth: contentWidth)
-                    case .community:
-                        communitySurface(contentWidth: contentWidth)
                     }
 
                     overviewStrip
@@ -123,11 +105,11 @@ struct DiscoverView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 HStack(spacing: 8) {
-                    Label("\(points)", systemImage: "star.fill")
+                    Label("\(savedOutfitIDs.count)", systemImage: "bookmark.fill")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(BrandPalette.gold)
 
-                    Text("\(dailyStreak)d")
+                    Text("\(activeDropCount) live")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(BrandPalette.textSecondary)
                 }
@@ -153,7 +135,7 @@ struct DiscoverView: View {
             }
         }
         .task {
-            if outfits.isEmpty && drops.isEmpty && challenges.isEmpty && leaderboard.isEmpty {
+            if outfits.isEmpty && drops.isEmpty {
                 await reloadDiscover(forceRefresh: false)
             }
         }
@@ -194,9 +176,9 @@ struct DiscoverView: View {
             }
 
             HStack(spacing: 10) {
-                DiscoverHeroMetric(value: "\(points)", label: "Points")
-                DiscoverHeroMetric(value: "\(dailyStreak)d", label: "Streak")
-                DiscoverHeroMetric(value: "\(creatorCount)", label: "Creators")
+                DiscoverHeroMetric(value: "\(outfits.count)", label: "Looks")
+                DiscoverHeroMetric(value: "\(activeDropCount)", label: "Live Drops")
+                DiscoverHeroMetric(value: "\(savedOutfitIDs.count)", label: "Saved")
             }
         }
         .padding(16)
@@ -216,9 +198,9 @@ struct DiscoverView: View {
                 subtitle: "Live now"
             )
             DiscoverOverviewCard(
-                title: "Community",
-                value: "\(leaderboard.first?.score ?? 0)",
-                subtitle: "Top weekly score"
+                title: "Saved",
+                value: "\(max(savedOutfitIDs.count, store.wishlistedProducts.count))",
+                subtitle: "Pieces kept"
             )
         }
     }
@@ -285,7 +267,7 @@ struct DiscoverView: View {
             BrandSectionHeader(
                 eyebrow: "Outfit Feed",
                 title: "Swipe looks. Shop pieces.",
-                copy: "Like, save, share, or reserve a fitting from the current outfit card."
+                copy: "Like, save, share, or move straight into the full shop from the current outfit card."
             )
 
             if outfits.isEmpty {
@@ -327,12 +309,12 @@ struct DiscoverView: View {
                         outfit: outfit,
                         isLiked: likedOutfitIDs.contains(outfit.id),
                         isSaved: savedOutfitIDs.contains(outfit.id),
-                        isFollowing: followedCreatorIDs.contains(outfit.creatorID),
                         onLike: { toggleLike(outfit) },
                         onSave: { toggleSave(outfit) },
-                        onFollow: { toggleFollow(outfit) },
                         onShare: { share(outfit) },
-                        onTryBeforeBuy: { activeSheet = .tryBeforeBuy }
+                        onOpenShop: {
+                            store.selectedTab = .shop
+                        }
                     )
                     .frame(width: cardWidth)
                     .frame(height: min(max(cardWidth * 1.58, 560), 720))
@@ -365,16 +347,19 @@ struct DiscoverView: View {
             BrandSectionHeader(
                 eyebrow: "Tools",
                 title: "Tools that help you decide faster.",
-                copy: "Open your style profile, closet, stylist, matching, or fitting requests."
+                copy: "Keep Discover focused on editorial browsing, stylist help, and saved shopping continuity."
             )
 
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                 featureButton(title: "Style Profile", subtitle: "Saved preferences", icon: "person.text.rectangle", sheet: .styleDNA)
-                featureButton(title: "Closet", subtitle: "Wardrobe tracker", icon: "hanger", sheet: .closet)
                 featureButton(title: "Stylist", subtitle: "Catalog advice", icon: "bubble.left.and.bubble.right", sheet: .aiStylist)
-                featureButton(title: "Style Match", subtitle: "Mood matching", icon: "sparkle.magnifyingglass", sheet: .snapMatch)
-                featureButton(title: "Try Before Buy", subtitle: "Reserve fitting", icon: "shippingbox", sheet: .tryBeforeBuy)
-                featureButton(title: "Style Box Request", subtitle: "Curated request", icon: "shippingbox.circle", sheet: .subscriptionBox)
+                featureActionButton(title: "Saved Pieces", subtitle: "Wishlist continuity", icon: "bookmark") {
+                    store.selectedTab = .account
+                    store.pushRoute(.wishlist)
+                }
+                featureActionButton(title: "Open Shop", subtitle: "Full catalog", icon: "bag") {
+                    store.selectedTab = .shop
+                }
             }
         }
     }
@@ -382,9 +367,9 @@ struct DiscoverView: View {
     private var monetizationCards: some View {
         VStack(alignment: .leading, spacing: 12) {
             BrandSectionHeader(
-                eyebrow: "Launches",
-                title: "Limited drops and early access.",
-                copy: "Track launches, join waitlists, and manage discovery campaigns."
+                eyebrow: "Keep Shopping",
+                title: "Move between launches, wishlist, and the full catalog.",
+                copy: "Discover stays focused on lookbook edits and launch highlights without turning into a social feed."
             )
 
             Button {
@@ -392,51 +377,33 @@ struct DiscoverView: View {
                     surface = .drops
                     BrandHaptics.mediumImpact()
                 }
+                } label: {
+                    DiscoverRevenueCard(
+                        icon: "bolt.horizontal.circle.fill",
+                        title: "Limited Drops",
+                        subtitle: "Stock and timing",
+                        detail: "See what is live now and what is arriving next without leaving the app shell.",
+                        emphasis: "\(activeDropCount) live now"
+                    )
+                }
+            .buttonStyle(.plain)
+
+            Button {
+                withInteractionLock {
+                    store.selectedTab = .account
+                    store.pushRoute(.wishlist)
+                    BrandHaptics.selection()
+                }
             } label: {
                 DiscoverRevenueCard(
-                    icon: "bolt.horizontal.circle.fill",
-                    title: "Limited Drops",
-                    subtitle: "Flash inventory + waitlist",
-                    detail: "Create urgency with countdown campaigns and early access queues.",
-                    emphasis: "\(activeDropCount) live now"
+                    icon: "bookmark.circle.fill",
+                    title: "Saved Pieces",
+                    subtitle: "Wishlist",
+                    detail: "Review saved products from Discover and continue shopping from your account.",
+                    emphasis: "\(store.wishlistedProducts.count) saved"
                 )
             }
             .buttonStyle(.plain)
-
-            if store.isAdmin {
-                Button {
-                    withInteractionLock {
-                        activeSheet = .sellerBoost
-                        BrandHaptics.mediumImpact()
-                    }
-                } label: {
-                    DiscoverRevenueCard(
-                        icon: "megaphone.fill",
-                        title: "Campaign Request",
-                        subtitle: "Reach estimate",
-                        detail: "Estimate reach and save a campaign request for admin follow-up.",
-                        emphasis: "Backend saved"
-                    )
-                }
-                .buttonStyle(.plain)
-            } else {
-                Button {
-                    withInteractionLock {
-                        store.selectedTab = .account
-                        store.pushRoute(.wishlist)
-                        BrandHaptics.selection()
-                    }
-                } label: {
-                    DiscoverRevenueCard(
-                        icon: "bookmark.circle.fill",
-                        title: "Saved Picks",
-                        subtitle: "Wishlist",
-                        detail: "Review saved products from Discover and continue shopping from your account.",
-                        emphasis: "\(store.wishlistedProducts.count) saved"
-                    )
-                }
-                .buttonStyle(.plain)
-            }
         }
     }
 
@@ -458,14 +425,14 @@ struct DiscoverView: View {
             VStack(alignment: .leading, spacing: 14) {
                 BrandSectionHeader(
                     eyebrow: "Limited Drops",
-                    title: "Launches with stock, timing, and waitlists.",
-                    copy: "Join a waitlist or check how much inventory remains before a drop opens."
+                    title: "Launches with stock, timing, and product momentum.",
+                    copy: "See what is live now, what is opening next, and when to jump back into the shop."
                 )
 
                 if drops.isEmpty {
                     EmptyStatePanel(
                         title: "No active drops",
-                        copy: "Live drop campaigns are unavailable right now. Pull to refresh or try again shortly.",
+                        copy: "Drop highlights are unavailable right now. Pull to refresh or try again shortly.",
                         buttonTitle: "Reload"
                     ) {
                         Task { await reloadDiscover(forceRefresh: true) }
@@ -475,81 +442,12 @@ struct DiscoverView: View {
                         DiscoverDropLaunchCard(
                             drop: drop,
                             countdownText: dropCountdownText(drop),
-                            isJoined: dropWaitlist.contains(drop.id),
-                            isPending: pendingDropJoin.contains(drop.id),
-                            onJoin: { Task { await joinDropWaitlist(drop) } }
-                        )
-                    }
-                }
-            }
-        }
-    }
-
-    private func communitySurface(contentWidth: CGFloat) -> some View {
-        centeredFeedSection(contentWidth: contentWidth) {
-            VStack(alignment: .leading, spacing: 14) {
-                BrandSectionHeader(
-                    eyebrow: "Community",
-                    title: "Challenges, voting, and weekly rank.",
-                    copy: "Vote in the active challenge and track leaderboard movement."
-                )
-
-                if challenges.isEmpty {
-                    EmptyStatePanel(
-                        title: "No community challenges",
-                        copy: "Challenge data will appear here when new community campaigns open.",
-                        buttonTitle: "Reload"
-                    ) {
-                        Task { await reloadDiscover(forceRefresh: true) }
-                    }
-                } else {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 10) {
-                            ForEach(challenges) { challenge in
-                                Button {
-                                    withInteractionLock {
-                                        selectedChallengeID = challenge.id
-                                        BrandHaptics.selection()
-                                    }
-                                } label: {
-                                    SelectionCapsule(
-                                        title: challenge.title,
-                                        isSelected: selectedChallenge?.id == challenge.id
-                                    )
-                                }
-                                .buttonStyle(.plain)
+                            onExplore: {
+                                store.selectedTab = .shop
                             }
-                        }
-                        .padding(.horizontal, 2)
-                    }
-
-                    if let selectedChallenge {
-                        DiscoverChallengeSpotlight(
-                            challenge: selectedChallenge,
-                            hasVoted: votedChallengeIDs.contains(selectedChallenge.id),
-                            isVoting: isVotingInChallenge,
-                            onVote: { Task { await voteInSelectedChallenge() } }
                         )
                     }
                 }
-
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Leaderboard")
-                        .font(BrandFont.mobileTitle3())
-                        .foregroundStyle(BrandPalette.textPrimary)
-
-                    if leaderboard.isEmpty {
-                        Text("Leaderboard will appear when votes are available.")
-                            .font(BrandFont.mobileBody())
-                            .foregroundStyle(BrandPalette.textSecondary)
-                    } else {
-                        ForEach(leaderboard) { entry in
-                            DiscoverLeaderboardRow(entry: entry)
-                        }
-                    }
-                }
-                .padding(16)
-                .brandPanel(cornerRadius: BrandRadius.card, tone: .chrome, material: true)
             }
         }
     }
@@ -583,23 +481,47 @@ struct DiscoverView: View {
         .frame(minHeight: 44)
     }
 
+    private func featureActionButton(
+        title: String,
+        subtitle: String,
+        icon: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button {
+            withInteractionLock {
+                BrandHaptics.selection()
+                action()
+            }
+        } label: {
+            VStack(alignment: .leading, spacing: 6) {
+                Image(systemName: icon)
+                    .font(.headline)
+                    .foregroundStyle(BrandPalette.gold)
+                    .frame(width: 28, height: 28)
+
+                Text(title)
+                    .font(BrandFont.mobileTitle3())
+                    .foregroundStyle(BrandPalette.textPrimary)
+
+                Text(subtitle)
+                    .font(BrandFont.mobileCaption())
+                    .foregroundStyle(BrandPalette.textSecondary)
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, minHeight: 118, alignment: .leading)
+            .brandPanel(cornerRadius: BrandRadius.soft, tone: .shadow, material: true)
+        }
+        .buttonStyle(.plain)
+        .frame(minHeight: 44)
+    }
+
     @ViewBuilder
     private func featureSheet(for sheet: DiscoverFeatureSheet) -> some View {
         switch sheet {
         case .styleDNA:
             DiscoverStyleDNASheet(styleDNA: $styleDNA)
-        case .closet:
-            DiscoverClosetSheet(products: Array(discoverProducts.prefix(24)))
         case .aiStylist:
             DiscoverAIStylistSheet(products: discoverProducts)
-        case .snapMatch:
-            DiscoverSnapMatchSheet()
-        case .tryBeforeBuy:
-            DiscoverTryBeforeBuySheet(products: Array(discoverProducts.prefix(16)))
-        case .subscriptionBox:
-            DiscoverSubscriptionBoxSheet()
-        case .sellerBoost:
-            DiscoverSellerBoostSheet()
         }
     }
 
@@ -607,13 +529,13 @@ struct DiscoverView: View {
     private func reloadDiscover(forceRefresh: Bool) async {
         struct LoadTimeout: Error {}
 
-        print("[DiscoverView] reloadDiscover(forceRefresh: \(forceRefresh)) start")
+        Logger.debug("DiscoverView reloadDiscover(forceRefresh: \(forceRefresh)) start")
         guard !isRefreshing else { return }
         isRefreshing = true
         defer {
             isRefreshing = false
             isLoading = false
-            print("[DiscoverView] reloadDiscover end isLoading=\(isLoading) error=\(errorMessage ?? "nil")")
+            Logger.debug("DiscoverView reloadDiscover end isLoading=\(isLoading) error=\(errorMessage ?? "nil")")
         }
 
         if forceRefresh {
@@ -648,39 +570,26 @@ struct DiscoverView: View {
                 )
             }
             drops = snapshot.drops
-            challenges = snapshot.challenges
-            leaderboard = snapshot.leaderboard.sorted { lhs, rhs in
-                if lhs.rank == rhs.rank {
-                    return lhs.score > rhs.score
-                }
-                return lhs.rank < rhs.rank
-            }
             let userState = (try? await APIService.shared.fetchDiscoverUserState()) ?? .empty
             discoverUserState = userState
-            dropWaitlist = Set(userState.waitlistedDropIDs)
-            votedChallengeIDs = Set(userState.votedChallengeIDs)
             likedOutfitIDs = Set(userState.likedOutfitIDs)
             savedOutfitIDs = Set(userState.savedOutfitIDs)
-            followedCreatorIDs = Set(userState.followedCreatorIDs)
             if let profile = userState.styleDNA ?? snapshot.styleProfile {
                 styleDNA = profile.summary
             }
-            if challenges.contains(where: { $0.id == selectedChallengeID }) == false {
-                selectedChallengeID = challenges.first?.id
-            }
             currentIndex = min(currentIndex, max(outfits.count - 1, 0))
             errorMessage = nil
-            print("[DiscoverView] reloadDiscover success outfits=\(outfits.count) drops=\(drops.count)")
+            Logger.debug("DiscoverView reloadDiscover success outfits=\(outfits.count) drops=\(drops.count)")
         } catch is LoadTimeout {
-            print("[DiscoverView] reloadDiscover timeout")
-            if outfits.isEmpty && drops.isEmpty && challenges.isEmpty && leaderboard.isEmpty {
+            Logger.error("DiscoverView reloadDiscover timed out")
+            if outfits.isEmpty && drops.isEmpty {
                 errorMessage = "Connection timed out. Please check your internet and retry."
             } else {
                 errorMessage = "Unable to refresh discover right now."
             }
         } catch {
-            print("[DiscoverView] reloadDiscover error=\(error)")
-            if outfits.isEmpty && drops.isEmpty && challenges.isEmpty && leaderboard.isEmpty {
+            Logger.error("DiscoverView reloadDiscover failed: \(error.localizedDescription)")
+            if outfits.isEmpty && drops.isEmpty {
                 errorMessage = "Discover content is unavailable right now."
             } else {
                 errorMessage = "Unable to refresh discover right now."
@@ -735,30 +644,6 @@ struct DiscoverView: View {
         }
     }
 
-    private func toggleFollow(_ outfit: DiscoverOutfit) {
-        withInteractionLock {
-            let isActive: Bool
-            if followedCreatorIDs.contains(outfit.creatorID) {
-                followedCreatorIDs.remove(outfit.creatorID)
-                isActive = false
-            } else {
-                followedCreatorIDs.insert(outfit.creatorID)
-                isActive = true
-                points += 4
-                BrandHaptics.notificationSuccess()
-                store.sendSmartNotification(
-                    kind: .recommendation,
-                    title: "Now following \(outfit.creatorName)",
-                    message: "New outfit drops from this creator will appear first in your feed.",
-                    emphasis: "Community update",
-                    actionTitle: "Open Discover",
-                    destination: .discover
-                )
-            }
-            persistDiscoverInteraction(kind: .followedCreator, targetID: outfit.creatorID, isActive: isActive)
-        }
-    }
-
     private func persistDiscoverInteraction(kind: DiscoverInteractionKind, targetID: String, isActive: Bool) {
         Task {
             if let state = try? await APIService.shared.updateDiscoverInteraction(
@@ -769,7 +654,6 @@ struct DiscoverView: View {
                 discoverUserState = state
                 likedOutfitIDs = Set(state.likedOutfitIDs)
                 savedOutfitIDs = Set(state.savedOutfitIDs)
-                followedCreatorIDs = Set(state.followedCreatorIDs)
             }
         }
     }
@@ -809,81 +693,6 @@ struct DiscoverView: View {
         return "Unlocks in \(minutes)m"
     }
 
-    private func joinDropWaitlist(_ drop: DiscoverDropData) async {
-        guard !dropWaitlist.contains(drop.id), !pendingDropJoin.contains(drop.id) else { return }
-        pendingDropJoin.insert(drop.id)
-        defer { pendingDropJoin.remove(drop.id) }
-
-        do {
-            let receipt = try await APIService.shared.joinDiscoverDropWaitlist(dropID: drop.id)
-            withInteractionLock {
-                dropWaitlist.insert(drop.id)
-                discoverUserState = DiscoverUserState(
-                    styleDNA: discoverUserState.styleDNA,
-                    closetProductIDs: discoverUserState.closetProductIDs,
-                    waitlistedDropIDs: Array(dropWaitlist).sorted(),
-                    votedChallengeIDs: discoverUserState.votedChallengeIDs,
-                    likedOutfitIDs: discoverUserState.likedOutfitIDs,
-                    savedOutfitIDs: discoverUserState.savedOutfitIDs,
-                    followedCreatorIDs: discoverUserState.followedCreatorIDs,
-                    activeSubscription: discoverUserState.activeSubscription,
-                    latestTryBeforeBuy: discoverUserState.latestTryBeforeBuy,
-                    latestBoost: discoverUserState.latestBoost
-                )
-                points += 5
-                BrandHaptics.notificationSuccess()
-                store.sendSmartNotification(
-                    kind: .promotion,
-                    title: "You joined \(drop.name)",
-                    message: "Your waitlist position was saved. Current queue size: \(receipt.waitlistCount).",
-                    emphasis: "Waitlist confirmed",
-                    actionTitle: "Open Discover",
-                    destination: .discover
-                )
-            }
-        } catch {
-            errorMessage = "Unable to join this waitlist right now."
-        }
-    }
-
-    private func voteInSelectedChallenge() async {
-        guard let challenge = selectedChallenge, !isVotingInChallenge else { return }
-        guard votedChallengeIDs.contains(challenge.id) == false else { return }
-        isVotingInChallenge = true
-        defer { isVotingInChallenge = false }
-
-        do {
-            let outcome = try await APIService.shared.submitDiscoverChallengeVote(challengeID: challenge.id)
-            let reward = max(challenge.rewardPoints, outcome.pointsAwarded)
-            withInteractionLock {
-                points += reward
-                votedChallengeIDs.insert(challenge.id)
-                BrandHaptics.selection()
-                if points % 24 == 0 {
-                    store.sendSmartNotification(
-                        kind: .recommendation,
-                        title: "Challenge reward unlocked",
-                        message: "You are climbing the weekly style leaderboard. Keep voting to unlock member perks.",
-                        emphasis: "\(points) points total",
-                        actionTitle: "View Notifications",
-                        destination: .discover
-                    )
-                }
-            }
-            if let community = try? await APIService.shared.fetchDiscoverCommunity() {
-                challenges = community.challenges
-                leaderboard = community.leaderboard.sorted { lhs, rhs in
-                    if lhs.rank == rhs.rank {
-                        return lhs.score > rhs.score
-                    }
-                    return lhs.rank < rhs.rank
-                }
-            }
-        } catch {
-            errorMessage = "Unable to submit your vote right now."
-        }
-    }
-
     private func withInteractionLock(_ action: () -> Void) {
         let now = Date()
         guard now.timeIntervalSince(lastInteractionAt) > 0.16 else { return }
@@ -892,10 +701,9 @@ struct DiscoverView: View {
     }
 }
 
-private enum DiscoverSurface: String, CaseIterable, Identifiable {
+enum DiscoverSurface: String, CaseIterable, Identifiable {
     case feed
     case drops
-    case community
 
     var id: String { rawValue }
 
@@ -903,19 +711,13 @@ private enum DiscoverSurface: String, CaseIterable, Identifiable {
         switch self {
         case .feed: return "Feed"
         case .drops: return "Drops"
-        case .community: return "Community"
         }
     }
 }
 
 private enum DiscoverFeatureSheet: String, Identifiable {
     case styleDNA
-    case closet
     case aiStylist
-    case snapMatch
-    case tryBeforeBuy
-    case subscriptionBox
-    case sellerBoost
 
     var id: String { rawValue }
 }
@@ -1033,12 +835,10 @@ private struct DiscoverOutfitCard: View {
     let outfit: DiscoverOutfit
     let isLiked: Bool
     let isSaved: Bool
-    let isFollowing: Bool
     let onLike: () -> Void
     let onSave: () -> Void
-    let onFollow: () -> Void
     let onShare: () -> Void
-    let onTryBeforeBuy: () -> Void
+    let onOpenShop: () -> Void
 
     private var featuredCategories: [String] {
         Array(Set(outfit.products.prefix(4).map { $0.category.title }))
@@ -1071,10 +871,10 @@ private struct DiscoverOutfitCard: View {
 
                         Spacer(minLength: 0)
 
-                        Button(isFollowing ? "Following" : "Follow") {
-                            onFollow()
+                        Button("Shop Look") {
+                            onOpenShop()
                         }
-                        .buttonStyle(BrandCapsuleButtonStyle(tone: isFollowing ? .chrome : .gold, horizontalPadding: 14))
+                        .buttonStyle(BrandCapsuleButtonStyle(tone: .gold, horizontalPadding: 14))
                         .frame(width: 116)
                         .frame(minHeight: 44)
                     }
@@ -1132,9 +932,9 @@ private struct DiscoverOutfitCard: View {
                                 action: onShare
                             )
                             DiscoverActionStripButton(
-                                systemImage: "shippingbox",
-                                title: "Try",
-                                action: onTryBeforeBuy
+                                systemImage: "bag",
+                                title: "Shop",
+                                action: onOpenShop
                             )
                         }
                     }
@@ -1359,9 +1159,7 @@ private struct DiscoverRevenueCard: View {
 private struct DiscoverDropLaunchCard: View {
     let drop: DiscoverDropData
     let countdownText: String
-    let isJoined: Bool
-    let isPending: Bool
-    let onJoin: () -> Void
+    let onExplore: () -> Void
 
     private var stockTone: Color {
         drop.stock < 10 ? Color.red.opacity(0.78) : BrandPalette.gold
@@ -1387,7 +1185,7 @@ private struct DiscoverDropLaunchCard: View {
 
                 Spacer(minLength: 0)
 
-                Text(drop.stock > 0 ? "\(drop.stock) left" : "Waitlist only")
+                Text(drop.stock > 0 ? "\(drop.stock) left" : "Sold out")
                     .font(BrandFont.mobileCaption())
                     .foregroundStyle(BrandPalette.textPrimary)
                     .padding(.horizontal, 10)
@@ -1415,11 +1213,10 @@ private struct DiscoverDropLaunchCard: View {
                     .tint(stockTone)
             }
 
-            Button(isJoined ? "Joined Waitlist" : (isPending ? "Joining..." : "Join Waitlist")) {
-                onJoin()
+            Button("Open Shop") {
+                onExplore()
             }
-            .buttonStyle(BrandCapsuleButtonStyle(tone: isJoined ? .chrome : .gold))
-            .disabled(isJoined || isPending)
+            .buttonStyle(BrandCapsuleButtonStyle(tone: .gold))
             .frame(minHeight: 44)
         }
         .padding(18)
@@ -2085,7 +1882,7 @@ private struct DiscoverSubscriptionBoxSheet: View {
                     .font(BrandFont.mobileTitle())
                     .foregroundStyle(BrandPalette.textPrimary)
 
-                Text("Choose a curated outfit plan and save a real request to your account. Billing is not collected in this build.")
+                Text("Choose a curated outfit plan and save a request to your account for stylist follow-up.")
                     .font(BrandFont.mobileBody())
                     .foregroundStyle(BrandPalette.textSecondary)
 

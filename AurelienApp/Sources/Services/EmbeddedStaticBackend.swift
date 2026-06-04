@@ -100,8 +100,51 @@ private extension EmbeddedStaticBackend {
             }
         }
 
+        #if DEBUG
+        if let fixtureURL = fixtureURL(named: fileName, subdirectories: subdirectories) {
+            return try Data(contentsOf: fixtureURL)
+        }
+        #endif
+
         throw APIError.notFound("Bundled content \(fileName) is missing.")
     }
+
+    #if DEBUG
+    func fixtureURL(named fileName: String, subdirectories: [String]) -> URL? {
+        let fileManager = FileManager.default
+        let sourceFileURL = URL(fileURLWithPath: #filePath)
+        let projectRootURL = sourceFileURL
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+        let backendRootURL = projectRootURL.appendingPathComponent("AurelienApp/AURE-LIEN-", isDirectory: true)
+
+        var candidateDirectories = [backendRootURL]
+        for subdirectory in subdirectories {
+            if subdirectory == "v1" {
+                candidateDirectories.append(
+                    backendRootURL
+                        .appendingPathComponent("public", isDirectory: true)
+                        .appendingPathComponent(subdirectory, isDirectory: true)
+                )
+            } else {
+                candidateDirectories.append(
+                    backendRootURL.appendingPathComponent(subdirectory, isDirectory: true)
+                )
+            }
+        }
+
+        for directory in candidateDirectories {
+            let candidate = directory.appendingPathComponent(fileName)
+            if fileManager.fileExists(atPath: candidate.path) {
+                return candidate
+            }
+        }
+
+        return nil
+    }
+    #endif
 
     func bundledJSON<T: Decodable>(_ type: T.Type, fileName: String, subdirectories: [String]) throws -> T {
         let data = try bundledData(named: fileName, subdirectories: subdirectories)
@@ -347,6 +390,41 @@ private extension EmbeddedStaticBackend {
             city: "Cairo",
             note: "Manage your account preferences and order activity."
         )
+    }
+
+    func validateUserDeletion(targetUserID: String, state: EmbeddedBackendState) throws {
+        guard let targetUser = state.users.first(where: { $0.id == targetUserID }) else {
+            return
+        }
+
+        if targetUser.isAdmin {
+            let adminCount = state.users.filter(\.isAdmin).count
+            guard adminCount > 1 else {
+                throw APIError.httpError(409, "At least one administrator account must remain.")
+            }
+        }
+    }
+
+    func deleteUserOwnedState(targetUserID: String, from state: EmbeddedBackendState) -> EmbeddedBackendState {
+        var state = state
+        state.users.removeAll { $0.id == targetUserID }
+        state.profiles.removeAll { $0.userId == targetUserID }
+        state.carts.removeAll { $0.userId == targetUserID }
+        state.orders.removeAll { $0.userId == targetUserID }
+        state.notifications.removeAll { $0.userId == targetUserID }
+        state.savedAddressesByUser.removeValue(forKey: targetUserID)
+        state.paymentMethodsByUser.removeValue(forKey: targetUserID)
+        state.savedProductIDsByUser.removeValue(forKey: targetUserID)
+        state.legacyClosetByUser.removeValue(forKey: targetUserID)
+        state.discover.removeUserData(for: targetUserID)
+        return state
+    }
+
+    func savedProducts(for user: EmbeddedStoredUser, state: EmbeddedBackendState) throws -> [Product] {
+        let catalogByID = Dictionary(uniqueKeysWithValues: try catalog().map { ($0.id, $0) })
+        return (state.savedProductIDsByUser[user.id] ?? []).compactMap { productID in
+            catalogByID[productID]?.nativeProduct
+        }
     }
 
     func validatedCatalogProduct(
@@ -1032,6 +1110,16 @@ private extension EmbeddedStaticBackend {
             return try encode(publicUser(user))
         }
 
+        if segments == ["account"] {
+            let user = try requireUser(token: token, state: state)
+            return try encode(
+                EmbeddedAccountEnvelope(
+                    user: publicUser(user),
+                    profile: profile(for: user, state: state)
+                )
+            )
+        }
+
         if segments == ["users", "me", "profile"] ||
             segments == ["profile"] ||
             segments == ["account", "profile"] {
@@ -1127,7 +1215,18 @@ private extension EmbeddedStaticBackend {
         }
 
         if segments == ["saved", "me"] {
-            return try encode([Product]())
+            let user = try requireUser(token: token, state: state)
+            return try encode(["products": savedProducts(for: user, state: state)])
+        }
+
+        if segments == ["wallet"] {
+            let user = try requireUser(token: token, state: state)
+            return try encode(
+                EmbeddedWalletEnvelope(
+                    savedAddresses: state.savedAddressesByUser[user.id] ?? [],
+                    paymentMethods: state.paymentMethodsByUser[user.id] ?? []
+                )
+            )
         }
 
         if segments == ["boutique", "products"] {
@@ -1187,7 +1286,7 @@ private extension EmbeddedStaticBackend {
             )
         }
 
-        if segments == ["auth", "signin"] {
+        if segments == ["auth", "signin"] || segments == ["auth", "login"] {
             let request = try decode(LoginCredentials.self, from: body)
             let email = request.email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
             let password = request.password.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -1220,6 +1319,14 @@ private extension EmbeddedStaticBackend {
             return try encode(EmbeddedTokenRefreshPayload(token: issueToken(for: user)))
         }
 
+        if segments == ["account", "delete"] {
+            let user = try requireUser(token: token, state: state)
+            try validateUserDeletion(targetUserID: user.id, state: state)
+            state = deleteUserOwnedState(targetUserID: user.id, from: state)
+            try persistState(state)
+            return try encode(EmbeddedSuccessPayload(success: true))
+        }
+
         if segments == ["products"] {
             _ = try requireAdmin(token: token, state: state)
             let product = try decode(Product.self, from: body)
@@ -1241,6 +1348,71 @@ private extension EmbeddedStaticBackend {
         if segments == ["orders", "validate-promo"] {
             let request = (try? decode(PromoValidationRequest.self, from: body)) ?? PromoValidationRequest(code: "")
             return try encode(promoResult(code: request.code))
+        }
+
+        if segments == ["saved", "me"] {
+            let user = try requireUser(token: token, state: state)
+            let request = try decode(EmbeddedSavedProductRequest.self, from: body)
+            let productID = request.productId.trimmingCharacters(in: .whitespacesAndNewlines)
+
+            guard productID.isEmpty == false else {
+                throw APIError.httpError(400, "Product ID is required.")
+            }
+            guard try catalog().contains(where: { $0.id == productID }) else {
+                throw APIError.notFound("Product not found.")
+            }
+
+            var savedIDs = state.savedProductIDsByUser[user.id] ?? []
+            savedIDs.removeAll { $0 == productID }
+            savedIDs.insert(productID, at: 0)
+            state.savedProductIDsByUser[user.id] = savedIDs
+            try persistState(state)
+            return try encode(["products": savedProducts(for: user, state: state)])
+        }
+
+        if segments == ["wallet", "addresses"] {
+            let user = try requireUser(token: token, state: state)
+            let request = try decode(SavedAddress.self, from: body)
+
+            guard !request.label.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                  !request.recipient.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                  !request.line1.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                  !request.phone.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                throw APIError.httpError(400, "Complete address details are required.")
+            }
+
+            let existing = state.savedAddressesByUser[user.id] ?? []
+            let normalizedID = request.id.trimmingCharacters(in: .whitespacesAndNewlines)
+            let normalized = SavedAddress(
+                id: normalizedID.isEmpty ? "address-\(UUID().uuidString.lowercased())" : normalizedID,
+                label: request.label.trimmingCharacters(in: .whitespacesAndNewlines),
+                recipient: request.recipient.trimmingCharacters(in: .whitespacesAndNewlines),
+                line1: request.line1.trimmingCharacters(in: .whitespacesAndNewlines),
+                apartment: request.apartment?.trimmingCharacters(in: .whitespacesAndNewlines),
+                city: request.city,
+                phone: request.phone.trimmingCharacters(in: .whitespacesAndNewlines),
+                isPrimary: request.isPrimary || existing.isEmpty
+            )
+
+            let remainingAddresses = existing
+                .filter { $0.id != normalized.id }
+                .map { address in
+                    guard normalized.isPrimary else { return address }
+                    return SavedAddress(
+                        id: address.id,
+                        label: address.label,
+                        recipient: address.recipient,
+                        line1: address.line1,
+                        apartment: address.apartment,
+                        city: address.city,
+                        phone: address.phone,
+                        isPrimary: false
+                    )
+                }
+            let nextAddresses = [normalized] + remainingAddresses
+            state.savedAddressesByUser[user.id] = nextAddresses
+            try persistState(state)
+            return try encode(EmbeddedSavedAddressesEnvelope(savedAddresses: nextAddresses))
         }
 
         if segments == ["cart"] || segments == ["cart", "items"] {
@@ -1656,6 +1828,44 @@ private extension EmbeddedStaticBackend {
         var state = try currentState()
         let user = try requireUser(token: token, state: state)
 
+        if segments.count == 3, segments[0] == "notifications", segments[2] == "read" {
+            guard state.notifications.contains(where: { $0.userId == user.id && $0.id == segments[1] }) else {
+                throw APIError.notFound("Notification not found.")
+            }
+
+            state.notifications = state.notifications.map { item in
+                item.userId == user.id && item.id == segments[1] ? item.markedRead() : item
+            }
+            try persistState(state)
+            return try encode(EmbeddedSuccessPayload(success: true))
+        }
+
+        if segments.count == 4, segments[0] == "wallet", segments[1] == "addresses", segments[3] == "primary" {
+            let addressID = segments[2]
+            guard (state.savedAddressesByUser[user.id] ?? []).contains(where: { $0.id == addressID }) else {
+                throw APIError.notFound("Address not found.")
+            }
+
+            state.savedAddressesByUser[user.id] = (state.savedAddressesByUser[user.id] ?? []).map { address in
+                SavedAddress(
+                    id: address.id,
+                    label: address.label,
+                    recipient: address.recipient,
+                    line1: address.line1,
+                    apartment: address.apartment,
+                    city: address.city,
+                    phone: address.phone,
+                    isPrimary: address.id == addressID
+                )
+            }
+            try persistState(state)
+            return try encode(
+                EmbeddedSavedAddressesEnvelope(
+                    savedAddresses: state.savedAddressesByUser[user.id] ?? []
+                )
+            )
+        }
+
         if segments.first == "products", segments.count == 2 {
             _ = try requireAdmin(token: token, state: state)
             let product = try decode(Product.self, from: body)
@@ -1780,6 +1990,59 @@ private extension EmbeddedStaticBackend {
     func handleDelete(segments: [String], body: Data?, token: String?) async throws -> Data {
         var state = try currentState()
 
+        if segments.first == "users", segments.count == 2 {
+            let user = try requireUser(token: token, state: state)
+            let targetUserID = segments[1] == "me" ? user.id : segments[1]
+
+            guard user.isAdmin || targetUserID == user.id else {
+                throw APIError.unauthorized("Unauthorized")
+            }
+
+            try validateUserDeletion(targetUserID: targetUserID, state: state)
+            state = deleteUserOwnedState(targetUserID: targetUserID, from: state)
+            try persistState(state)
+            return try encode(EmbeddedSuccessPayload(success: true))
+        }
+
+        if segments == ["account", "delete"] {
+            let user = try requireUser(token: token, state: state)
+            try validateUserDeletion(targetUserID: user.id, state: state)
+            state = deleteUserOwnedState(targetUserID: user.id, from: state)
+            try persistState(state)
+            return try encode(EmbeddedSuccessPayload(success: true))
+        }
+
+        if segments.first == "notifications", segments.count == 2 {
+            let user = try requireUser(token: token, state: state)
+            state.notifications.removeAll { $0.userId == user.id && $0.id == segments[1] }
+            try persistState(state)
+            return try encode(EmbeddedSuccessPayload(success: true))
+        }
+
+        if segments.count == 3, segments[0] == "wallet", segments[1] == "addresses" {
+            let user = try requireUser(token: token, state: state)
+            let current = state.savedAddressesByUser[user.id] ?? []
+            let deletedWasPrimary = current.contains(where: { $0.id == segments[2] && $0.isPrimary })
+            var next = current.filter { $0.id != segments[2] }
+            if deletedWasPrimary, let first = next.first {
+                next = next.map { address in
+                    SavedAddress(
+                        id: address.id,
+                        label: address.label,
+                        recipient: address.recipient,
+                        line1: address.line1,
+                        apartment: address.apartment,
+                        city: address.city,
+                        phone: address.phone,
+                        isPrimary: address.id == first.id
+                    )
+                }
+            }
+            state.savedAddressesByUser[user.id] = next
+            try persistState(state)
+            return try encode(EmbeddedSavedAddressesEnvelope(savedAddresses: next))
+        }
+
         if segments.first == "cart" {
             let user = try requireUser(token: token, state: state)
         let request = body.flatMap { try? decode(EmbeddedCartDeleteRequest.self, from: $0) }
@@ -1819,6 +2082,21 @@ private extension EmbeddedStaticBackend {
             return try encode(EmbeddedSuccessPayload(success: true))
         }
 
+        if segments == ["saved", "me"] {
+            let user = try requireUser(token: token, state: state)
+            let request = body.flatMap { try? decode(EmbeddedSavedProductRequest.self, from: $0) }
+
+            if let productID = request?.productId.trimmingCharacters(in: .whitespacesAndNewlines), !productID.isEmpty {
+                state.savedProductIDsByUser[user.id] = (state.savedProductIDsByUser[user.id] ?? [])
+                    .filter { $0 != productID }
+            } else {
+                state.savedProductIDsByUser[user.id] = []
+            }
+
+            try persistState(state)
+            return try encode(["products": try savedProducts(for: user, state: state)])
+        }
+
         if segments.first == "orders", segments.count == 2 {
             _ = try requireAdmin(token: token, state: state)
             state.orders.removeAll { $0.id == segments[1] }
@@ -1835,6 +2113,9 @@ private extension EmbeddedStaticBackend {
 
             if state.catalogProducts.contains(where: { $0.id == productID }) {
                 state.catalogProducts.removeAll { $0.id == productID }
+                state.savedProductIDsByUser = state.savedProductIDsByUser.mapValues { savedIDs in
+                    savedIDs.filter { $0 != productID }
+                }
                 try persistState(state)
                 return try encode(EmbeddedSuccessPayload(success: true))
             }
@@ -1845,6 +2126,9 @@ private extension EmbeddedStaticBackend {
             }
 
             state.deletedCatalogProductIDs.insert(productID)
+            state.savedProductIDsByUser = state.savedProductIDsByUser.mapValues { savedIDs in
+                savedIDs.filter { $0 != productID }
+            }
             try persistState(state)
             return try encode(EmbeddedSuccessPayload(success: true))
         }
@@ -2067,6 +2351,9 @@ private struct EmbeddedBackendState: Codable {
     var carts: [EmbeddedStoredCart]
     var orders: [EmbeddedStoredOrder]
     var notifications: [EmbeddedStoredNotification]
+    var savedAddressesByUser: [String: [SavedAddress]]
+    var paymentMethodsByUser: [String: [StoredPaymentMethod]]
+    var savedProductIDsByUser: [String: [String]]
     var discover: EmbeddedDiscoverState
     var legacyClosetByUser: [String: [EmbeddedLegacyClosetItem]]
     var catalogProducts: [EmbeddedCatalogProduct]
@@ -2078,6 +2365,9 @@ private struct EmbeddedBackendState: Codable {
         carts: [],
         orders: [],
         notifications: [],
+        savedAddressesByUser: [:],
+        paymentMethodsByUser: [:],
+        savedProductIDsByUser: [:],
         discover: .empty,
         legacyClosetByUser: [:],
         catalogProducts: [],
@@ -2090,6 +2380,9 @@ private struct EmbeddedBackendState: Codable {
         carts: [EmbeddedStoredCart],
         orders: [EmbeddedStoredOrder],
         notifications: [EmbeddedStoredNotification],
+        savedAddressesByUser: [String: [SavedAddress]],
+        paymentMethodsByUser: [String: [StoredPaymentMethod]],
+        savedProductIDsByUser: [String: [String]],
         discover: EmbeddedDiscoverState,
         legacyClosetByUser: [String: [EmbeddedLegacyClosetItem]],
         catalogProducts: [EmbeddedCatalogProduct] = [],
@@ -2100,6 +2393,9 @@ private struct EmbeddedBackendState: Codable {
         self.carts = carts
         self.orders = orders
         self.notifications = notifications
+        self.savedAddressesByUser = savedAddressesByUser
+        self.paymentMethodsByUser = paymentMethodsByUser
+        self.savedProductIDsByUser = savedProductIDsByUser
         self.discover = discover
         self.legacyClosetByUser = legacyClosetByUser
         self.catalogProducts = catalogProducts
@@ -2113,6 +2409,9 @@ private struct EmbeddedBackendState: Codable {
         carts = try container.decodeIfPresent([EmbeddedStoredCart].self, forKey: .carts) ?? []
         orders = try container.decodeIfPresent([EmbeddedStoredOrder].self, forKey: .orders) ?? []
         notifications = try container.decodeIfPresent([EmbeddedStoredNotification].self, forKey: .notifications) ?? []
+        savedAddressesByUser = try container.decodeIfPresent([String: [SavedAddress]].self, forKey: .savedAddressesByUser) ?? [:]
+        paymentMethodsByUser = try container.decodeIfPresent([String: [StoredPaymentMethod]].self, forKey: .paymentMethodsByUser) ?? [:]
+        savedProductIDsByUser = try container.decodeIfPresent([String: [String]].self, forKey: .savedProductIDsByUser) ?? [:]
         discover = try container.decodeIfPresent(EmbeddedDiscoverState.self, forKey: .discover) ?? .empty
         legacyClosetByUser = try container.decodeIfPresent([String: [EmbeddedLegacyClosetItem]].self, forKey: .legacyClosetByUser) ?? [:]
         catalogProducts = try container.decodeIfPresent([EmbeddedCatalogProduct].self, forKey: .catalogProducts) ?? []
@@ -2125,6 +2424,9 @@ private struct EmbeddedBackendState: Codable {
         case carts
         case orders
         case notifications
+        case savedAddressesByUser
+        case paymentMethodsByUser
+        case savedProductIDsByUser
         case discover
         case legacyClosetByUser
         case catalogProducts
@@ -2138,6 +2440,9 @@ private struct EmbeddedBackendState: Codable {
             carts: carts,
             orders: orders.map(\.normalized),
             notifications: notifications,
+            savedAddressesByUser: savedAddressesByUser,
+            paymentMethodsByUser: paymentMethodsByUser,
+            savedProductIDsByUser: savedProductIDsByUser,
             discover: discover,
             legacyClosetByUser: legacyClosetByUser,
             catalogProducts: catalogProducts.map(\.normalized),
@@ -2233,6 +2538,20 @@ private struct EmbeddedDiscoverState: Codable {
         case subscriptionAssignments
         case boosts
         case tryBeforeBuy
+    }
+
+    mutating func removeUserData(for userId: String) {
+        styleDNAByUser.removeValue(forKey: userId)
+        closetByUser.removeValue(forKey: userId)
+        likedOutfitsByUser.removeValue(forKey: userId)
+        savedOutfitsByUser.removeValue(forKey: userId)
+        followedCreatorsByUser.removeValue(forKey: userId)
+
+        waitlists = waitlists.mapValues { $0.filter { $0 != userId } }
+        votesByChallenge = votesByChallenge.mapValues { $0.filter { $0 != userId } }
+        subscriptionAssignments.removeAll { $0.userId == userId }
+        boosts.removeAll { $0.userId == userId }
+        tryBeforeBuy.removeAll { $0.userId == userId }
     }
 }
 
@@ -2511,7 +2830,21 @@ private struct EmbeddedAdminUsersEnvelope: Codable {
     let users: [User]
 }
 
+private struct EmbeddedWalletEnvelope: Codable {
+    let savedAddresses: [SavedAddress]
+    let paymentMethods: [StoredPaymentMethod]
+}
+
+private struct EmbeddedSavedAddressesEnvelope: Codable {
+    let savedAddresses: [SavedAddress]
+}
+
 private struct EmbeddedProfileEnvelope: Codable {
+    let profile: ClientProfile
+}
+
+private struct EmbeddedAccountEnvelope: Codable {
+    let user: User
     let profile: ClientProfile
 }
 
@@ -2585,6 +2918,10 @@ private struct EmbeddedCartDeleteRequest: Codable {
     let productId: String
     let size: String?
     let color: String?
+}
+
+private struct EmbeddedSavedProductRequest: Codable {
+    let productId: String
 }
 
 private struct EmbeddedBoostRequest: Codable {

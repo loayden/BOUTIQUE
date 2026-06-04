@@ -80,7 +80,7 @@ struct SearchView: View {
                     BrandSectionHeader(
                         eyebrow: "Results",
                         title: "\(results.count) matching pieces",
-                        copy: "Search is now dedicated to its own screen so results stay stable and easy to scan."
+                        copy: "Results stay direct and image-led so you can compare products quickly without extra chrome."
                     )
 
                     LazyVStack(spacing: 12) {
@@ -111,10 +111,10 @@ struct SearchView: View {
     private var searchField: some View {
         HStack(spacing: 12) {
             Image(systemName: "magnifyingglass")
-                .foregroundStyle(BrandPalette.gold)
+                .foregroundStyle(BrandPalette.goldDeep)
 
-            TextField("Search BOUTIQUE...", text: $query)
-                .font(.body)
+            TextField("Search jackets, denim, loafers...", text: $query)
+                .font(BrandFont.mobileBody())
                 .foregroundStyle(BrandPalette.textPrimary)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()

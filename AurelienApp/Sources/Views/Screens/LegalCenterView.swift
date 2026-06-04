@@ -11,7 +11,7 @@ struct LegalCenterView: View {
                 BrandSectionHeader(
                     eyebrow: "Legal",
                     title: "Terms, privacy, and account responsibilities presented in a native reading flow.",
-                    copy: "These sections are adapted from the web storefront policies but reformatted to stay readable on a phone without dense tables or cramped copy blocks."
+                    copy: "Policy content is kept readable, warm, and deliberate, with enough spacing for comfortable review on a phone."
                 )
 
                 if isLoading {
@@ -60,6 +60,33 @@ struct LegalCenterView: View {
                         .padding(18)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .brandPanel(cornerRadius: BrandRadius.card, tone: .chrome, material: true)
+                    }
+
+                    if let privacyPolicyURL = AppExperiencePolicy.privacyPolicyURL {
+                        Link(destination: privacyPolicyURL) {
+                            HStack(spacing: 14) {
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Text("Open External Privacy Policy")
+                                        .font(BrandFont.mobileTitle3())
+                                        .foregroundStyle(BrandPalette.textPrimary)
+
+                                    Text(privacyPolicyURL.absoluteString)
+                                        .font(BrandFont.mobileCaption())
+                                        .foregroundStyle(BrandPalette.textSecondary)
+                                        .lineLimit(2)
+                                }
+
+                                Spacer()
+
+                                Image(systemName: "arrow.up.right")
+                                    .font(.system(size: 13, weight: .light))
+                                    .foregroundStyle(BrandPalette.textMuted)
+                            }
+                            .padding(18)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .buttonStyle(.plain)
+                        .brandPanel(cornerRadius: BrandRadius.card, tone: .shadow, material: false)
                     }
                 }
             }

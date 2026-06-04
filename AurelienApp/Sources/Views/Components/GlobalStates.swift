@@ -6,9 +6,9 @@ struct SkeletonView: View {
         RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
             .fill(LinearGradient(
                 gradient: Gradient(colors: [
-                    BrandPalette.surfaceRaised.opacity(0.92),
-                    BrandPalette.surface.opacity(0.72),
-                    BrandPalette.surfaceRaised.opacity(0.92)
+                    BrandPalette.surfaceRaised,
+                    BrandPalette.surface.opacity(0.92),
+                    BrandPalette.surfaceRaised
                 ]),
                 startPoint: .leading,
                 endPoint: .trailing

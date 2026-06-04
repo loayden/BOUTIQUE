@@ -2,6 +2,11 @@
 .env
 .env.*
 !.env.example
+!.env.development.example
+!.env.production.example
+
+# Local deployment metadata
+.vercel/
 
 # Dependencies and generated output
 build/
@@ -10,6 +15,12 @@ dist/
 node_modules/
 *.tsbuildinfo
 DerivedData/
+coverage/
+tmp/
+tmp-*.png
+tmp-*.jpg
+tmp-*.jpeg
+boutique-app-portfolio-cover.*
 
 # Xcode local state
 xcuserdata/
@@ -17,6 +28,7 @@ xcuserdata/
 
 # Local backend state and generated uploads
 AurelienApp/AURE-LIEN-/data/state.json
+AurelienApp/AURE-LIEN-/.mongodb/
 AurelienApp/AURE-LIEN-/public/uploads/admin/
 AurelienApp/AURE-LIEN-/public/uploads/*.mp4
 AurelienApp/Sources/public/

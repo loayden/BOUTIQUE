@@ -234,7 +234,7 @@ struct HomeView: View {
             HomeMenuSheet(selectedTab: $selectedTab)
                 .presentationDetents([.medium])
                 .presentationDragIndicator(.visible)
-                .presentationBackground(.ultraThinMaterial)
+                .presentationBackground(BrandPalette.backgroundWarm)
         }
         .sheet(isPresented: $showAddressSheet) {
             AddressSelectionSheet(
@@ -246,7 +246,7 @@ struct HomeView: View {
             )
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)
-            .presentationBackground(.ultraThinMaterial)
+            .presentationBackground(BrandPalette.backgroundWarm)
         }
         .sheet(isPresented: $showSearchSheet) {
             NavigationStack {

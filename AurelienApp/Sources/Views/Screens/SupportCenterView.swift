@@ -15,7 +15,7 @@ struct SupportCenterView: View {
                 BrandSectionHeader(
                     eyebrow: "Support",
                     title: "Customer care, FAQs, and policy guidance without leaving the app.",
-                    copy: "Find support channels, answers, and store policies in one place."
+                    copy: "Find client care routes, answers, and store policies in one calm, readable place."
                 )
 
                 if isLoading {
@@ -39,6 +39,7 @@ struct SupportCenterView: View {
                         supportChannels
                         faqSection
                         policySection
+                        externalHelpSection
                     }
                 }
             }
@@ -194,6 +195,44 @@ struct SupportCenterView: View {
                 Text("There are \(store.unreadNotificationCount) unread client notifications still waiting in the notification center.")
                     .font(BrandFont.mobileCaption())
                     .foregroundStyle(BrandPalette.accent)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var externalHelpSection: some View {
+        if let supportURL = AppExperiencePolicy.supportURL {
+            VStack(alignment: .leading, spacing: BrandSpacing.md) {
+                BrandSectionHeader(
+                    eyebrow: "Outside The App",
+                    title: "Keep a direct support route available in the browser.",
+                    copy: "App Review and customers should both be able to reach support without depending on an in-app-only screen."
+                )
+
+                Link(destination: supportURL) {
+                    HStack(spacing: 14) {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Open Support Website")
+                                .font(BrandFont.mobileTitle3())
+                                .foregroundStyle(BrandPalette.textPrimary)
+
+                            Text(supportURL.absoluteString)
+                                .font(BrandFont.mobileCaption())
+                                .foregroundStyle(BrandPalette.textSecondary)
+                                .lineLimit(2)
+                        }
+
+                        Spacer()
+
+                        Image(systemName: "arrow.up.right")
+                            .font(.system(size: 13, weight: .light))
+                            .foregroundStyle(BrandPalette.textMuted)
+                    }
+                    .padding(18)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .buttonStyle(.plain)
+                .brandPanel(cornerRadius: BrandRadius.card, tone: .shadow, material: false)
             }
         }
     }

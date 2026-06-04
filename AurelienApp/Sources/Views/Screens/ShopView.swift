@@ -213,9 +213,14 @@ struct ShopView: View {
         do {
             let result = try await withThrowingTaskGroup(of: ShopLoadResult.self) { group in
                 group.addTask {
-                    async let products = store.loadCatalog(forceRefresh: true)
-                    async let remoteBoutiques: [ShopBoutique] = APIService.shared.request("/boutiques")
-                    return try await ShopLoadResult(
+                    let products = try await store.loadCatalog(forceRefresh: true)
+                    let remoteBoutiques: [ShopBoutique]
+                    do {
+                        remoteBoutiques = try await APIService.shared.request("/boutiques")
+                    } catch {
+                        remoteBoutiques = []
+                    }
+                    return ShopLoadResult(
                         products: products,
                         boutiques: remoteBoutiques
                     )
@@ -949,7 +954,7 @@ private struct ShopFilterSheet: View {
         .tint(BrandPalette.accent)
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
-        .presentationBackground(.ultraThinMaterial)
+        .presentationBackground(BrandPalette.backgroundWarm)
     }
 
     @ViewBuilder

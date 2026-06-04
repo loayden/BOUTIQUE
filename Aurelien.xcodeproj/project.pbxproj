@@ -7,11 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A11E11111111111111111112 /* APIServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11E11111111111111111111 /* APIServiceTests.swift */; };
 		0173E0D1FFCE8205A6AD2C32 /* Black & White Striped Polo Sweater.jpg in Resources */ = {isa = PBXBuildFile; fileRef = E8A8DED058C3835416B6B041 /* Black & White Striped Polo Sweater.jpg */; };
 		01E66CBAEE9156F023EBD569 /* MarketplaceModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B075528EE8578AAAE61F8F05 /* MarketplaceModels.swift */; };
 		02575A4168134952681ECDA1 /* look1.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 63B10DDA3D626452E03717DC /* look1.jpg */; };
 		03EF7B307E5C8365A9141146 /* leather_crazy_jacket2.jpg in Resources */ = {isa = PBXBuildFile; fileRef = A2E52AF24BE189C06B2696B5 /* leather_crazy_jacket2.jpg */; };
+		04EDBA6961915AD5EEC58A87 /* APIServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3693259A728B59D3F5FB2CA /* APIServiceTests.swift */; };
 		04F04DCE2F12B8D88D6C82A2 /* GamificationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236EBDDC565A24FE9958ADC7 /* GamificationView.swift */; };
 		057E1117CFC12F634630E645 /* FullScreenProductCarousel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EB56CB3A34A7261990DD20B /* FullScreenProductCarousel.swift */; };
 		0A7A33BB939B79A6BC1BDC97 /* mozz2.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 23B5437B06ADA7960D8EA713 /* mozz2.jpg */; };
@@ -24,11 +24,9 @@
 		14A3D22535BE6D4ADD32BE5A /* black&white_shirt.jpg in Resources */ = {isa = PBXBuildFile; fileRef = BA622C5A447B1D6963AA807F /* black&white_shirt.jpg */; };
 		16F8916D81D181FB5501EF8A /* go-bg.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 5B6AD389BFD131AED8C0DDBF /* go-bg.jpg */; };
 		17899826397A0158A77D9C8C /* footwear.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 8F3345D02A627F9E467F3D44 /* footwear.jpg */; };
-		17C8FC9325B68EAE808355C4 /* home.json in Resources */ = {isa = PBXBuildFile; fileRef = 784926F209E853383D5E70D0 /* home.json */; };
 		1981FC41FFF3257E67291F5E /* Dark Indigo Denim Jeans.jpg in Resources */ = {isa = PBXBuildFile; fileRef = B5E4DCCA8AC514FF08DC3B8E /* Dark Indigo Denim Jeans.jpg */; };
 		1A7047574175EEB36779DD31 /* black.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 26DD263A256B00911BB5E9ED /* black.jpg */; };
 		204C4935D71912D9A8BEE54D /* main.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 89FC25B300B203A9C691871A /* main.jpg */; };
-		213B96BBD5802031DAAEADBE /* discover.json in Resources */ = {isa = PBXBuildFile; fileRef = 46B006A1FEC95F02890EF5E6 /* discover.json */; };
 		2191ABAA4CF686C65F428CAC /* italian_jacket.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 4488B08B9899614884322C86 /* italian_jacket.jpg */; };
 		21EF72A161FDA2EB9895609F /* purblejacket.jpg in Resources */ = {isa = PBXBuildFile; fileRef = FAA3D88E6F17601BD39D8C02 /* purblejacket.jpg */; };
 		22EC86368886DD45587C035E /* light_violet_jacket.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 9AE14B2E5DFB44EE9D26A9E4 /* light_violet_jacket.jpg */; };
@@ -37,6 +35,7 @@
 		24247405A2FB0BF768D3CD2A /* ShopView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80596C90ED441DEDDFF44CA /* ShopView.swift */; };
 		24407620A1442CA4D0A270F0 /* Camo Wool Trousers (Gray).jpg in Resources */ = {isa = PBXBuildFile; fileRef = F3E144A5F84DD05D64FB7AB1 /* Camo Wool Trousers (Gray).jpg */; };
 		24BB74FB227991EDB20CA562 /* APIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73164D2953915D1E38A34A4C /* APIService.swift */; };
+		24C226DB72548906423A3DD7 /* BoutiqueAppShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD1CF5CBFF895BA8F7A8F5AE /* BoutiqueAppShortcuts.swift */; };
 		24CA3990A61AAE41EC699900 /* AppDefaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = E34FA5AD2D47018FB8E719A8 /* AppDefaults.swift */; };
 		2535C3855C6B1C54982238AF /* brown_leather.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 9E169F8D7F6AAA19654A8DA9 /* brown_leather.jpg */; };
 		267143284E81482FA00AFC11 /* Beige Essential Rib-Knit Sweater.jpg in Resources */ = {isa = PBXBuildFile; fileRef = B1452F83F3ED2EED96B51DA6 /* Beige Essential Rib-Knit Sweater.jpg */; };
@@ -79,7 +78,6 @@
 		628974106121DEF077702E6F /* baggy.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 832E246C7A3D7F4473E3584E /* baggy.jpg */; };
 		650AF8CC972A295FE8BD1AB7 /* harly_leather_black_jacket.jpg in Resources */ = {isa = PBXBuildFile; fileRef = E116EBBC84AE2049B9B032D7 /* harly_leather_black_jacket.jpg */; };
 		667A52828D446B3478281FAD /* boots.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 768239767561E2BAB0054A70 /* boots.jpg */; };
-		6722102D7944C130C714D587 /* state.json in Resources */ = {isa = PBXBuildFile; fileRef = 707954ACEACD434574E9768B /* state.json */; };
 		6731F5CD3888BF052B34BAFB /* StyleProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46553AC637B092F5712BC94A /* StyleProfileView.swift */; };
 		679C02CE274F51F92D70BA5F /* Jackets & Coats.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 9B3733FCC134C6B14D5DDD7B /* Jackets & Coats.jpg */; };
 		6A12FE956466F9F73D577385 /* brownleather2.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 0E0B5EE30D9E4F37747054E4 /* brownleather2.jpg */; };
@@ -93,11 +91,9 @@
 		7AB7602ADC8696A34C42A880 /* SnapMatchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F28DDDE00A5AAA5F59A9C400 /* SnapMatchView.swift */; };
 		7AF38F4FF90212D6878767C8 /* StylistStudioView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46E19BBA03FE0CD2C91DD586 /* StylistStudioView.swift */; };
 		7BF1BE88C9D4BBBD10F92DE5 /* CODGovernoratePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE97B75C5138DFCD81D546C9 /* CODGovernoratePickerView.swift */; };
-		7C692E8A00281C2F959E1EE4 /* MarketplaceAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61202332CE791B5FC2F178DD /* MarketplaceAPIService.swift */; };
 		7D046B9E9D377920A81D24D4 /* harly2.jpg in Resources */ = {isa = PBXBuildFile; fileRef = DFDF6A123234A447BD7E55C2 /* harly2.jpg */; };
 		7D7EE61B61953987FF283E27 /* iryna-muller--DLmQKLGlbM-unsplash.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 3CE00D81A0FE4CE6BDDCDD39 /* iryna-muller--DLmQKLGlbM-unsplash.jpg */; };
 		80C0DEBC743E0F5FC71F0908 /* StylistChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53B5F19A99F72B2108B8C82D /* StylistChatView.swift */; };
-		81CFEF2392BCB0FB77524360 /* legal.json in Resources */ = {isa = PBXBuildFile; fileRef = F58596BAD765D58B7BE454AF /* legal.json */; };
 		829EEBD09711483D3262CB5F /* HapticsAndTap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97DC72EFD368A655459A7A56 /* HapticsAndTap.swift */; };
 		82BF6DEF2C3291969A0A82F1 /* Belts.jpg in Resources */ = {isa = PBXBuildFile; fileRef = B628AF9757C8E4BECC8E4A8B /* Belts.jpg */; };
 		83BE95D681F10146018A2F55 /* leathercrazy.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 4AB5FE7236FEDCFAEBA9A0C7 /* leathercrazy.jpg */; };
@@ -114,6 +110,7 @@
 		91344564B9BA22904884AF68 /* Jost-Italic[wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = 0345BC404605932EC12957F1 /* Jost-Italic[wght].ttf */; };
 		9179631129E9C2C355F70137 /* dirty_leather_jacket.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 967644AD9B75765089270D1E /* dirty_leather_jacket.jpg */; };
 		92B9D184A895DBF06ADF1FBD /* APICache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BF3E55B9AA08939D5CB67A8 /* APICache.swift */; };
+		941A4C229006435562C2B211 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 05928BC07F9EDB8234CD123C /* PrivacyInfo.xcprivacy */; };
 		952015761C85946A575DE8F0 /* leather_crazy_jacket.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 590B8962EFFBE8A9007FF80F /* leather_crazy_jacket.jpg */; };
 		9532A610522904DAC363B4BF /* Balenciaga Gradient Logo Sweater.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 28AADCCFE0AB64C6EE491FA0 /* Balenciaga Gradient Logo Sweater.jpg */; };
 		96BC7E60A52C5CBFB79C212A /* AccessibilityHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5375144B95E064FCAD8ED303 /* AccessibilityHelpers.swift */; };
@@ -133,23 +130,19 @@
 		A5C9EF852C857013B5342125 /* black_wind_jacket.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 31B191B45F2CAD8E3F6CFB6A /* black_wind_jacket.jpg */; };
 		A71F50C966C440BCB1C7FE61 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D74DD30B4646A39AA551782 /* OnboardingView.swift */; };
 		AA72FCBB9E4B66BB551D4EAA /* Jost[wght].ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6EC4FDAB84694EFC9E4335B3 /* Jost[wght].ttf */; };
-		AAF205A4603C3E9C6BA51124 /* products.json in Resources */ = {isa = PBXBuildFile; fileRef = A3733C86D786BEAF75D5F22A /* products.json */; };
 		AE21B97D10AA445DEFCCE60B /* Cream Geometric Quilted Shacket.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 6704AB4AFA33FECBF8558E72 /* Cream Geometric Quilted Shacket.jpg */; };
 		AE41DD46803F06DFAF250B77 /* Loafers.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 4E8A8A9D9298505733B88455 /* Loafers.jpg */; };
 		AEBD879E3FBE3FE33CCB0425 /* korean.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 5F29A9B976585B1306DB85C1 /* korean.jpg */; };
 		B1273FC62249E9E1B6C78673 /* Diesel Elastic-Back Chino (Cream).jpg in Resources */ = {isa = PBXBuildFile; fileRef = A0004004106133FD6A427904 /* Diesel Elastic-Back Chino (Cream).jpg */; };
-		B1D9990F308EABD8BEC3BFF5 /* support.json in Resources */ = {isa = PBXBuildFile; fileRef = 3D69C6C45408A9B1E4583BB4 /* support.json */; };
 		B213778CC9B42B431BFB070F /* AppErrorHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ABDDBF6835A25D3EAE5E061 /* AppErrorHandler.swift */; };
 		B350137E7247F5E8C890B569 /* Poker Face Tan Ribbed Polo.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 3A36449BC1CADC1352D7CE8E /* Poker Face Tan Ribbed Polo.jpg */; };
 		B4B69EB9760B08E8FA31D27C /* BrandTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = F26C5ECFABB7F3C5500AD720 /* BrandTheme.swift */; };
 		B56E765AD39171AE54355869 /* peig_leather_jacket.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 50228AB2BF74A3379F98562B /* peig_leather_jacket.jpg */; };
 		BAF18D8663E7CAC53F14AA12 /* GlobalStates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 501A3BB7FAD177229E4F5E81 /* GlobalStates.swift */; };
-		BCA43E53CC07AB3E6A3E39B3 /* boutiques.json in Resources */ = {isa = PBXBuildFile; fileRef = DBA280A772E51FE62884E578 /* boutiques.json */; };
 		BD9EEDC6D827EEA2B8D58781 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40BB44A133E237D3C1B894D /* HomeView.swift */; };
 		BDEDFAFA7FF0E800003C267A /* robe.jpg in Resources */ = {isa = PBXBuildFile; fileRef = F04ECBC4D0ED55B063A01FE5 /* robe.jpg */; };
 		BE19FF0E1B4D5F1047A9A932 /* ImageCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = D42FFF16456130AF5CC4D004 /* ImageCache.swift */; };
 		BF3F795C8AAD966CDB7C87CF /* greyjacket.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 230C40AFFC5822C48982083B /* greyjacket.jpg */; };
-		C0C6D0A132BADFBA8EEDDD87 /* collections.json in Resources */ = {isa = PBXBuildFile; fileRef = 377243644250328C32CF3962 /* collections.json */; };
 		C437FFE5DC569C66661E40F0 /* black_jacket_sheep.jpg in Resources */ = {isa = PBXBuildFile; fileRef = C7F2AC6CAB49F5A9EA449DC7 /* black_jacket_sheep.jpg */; };
 		C489AD390999793F1009223D /* blue&white_shirt.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 339CA0FE2A0F23B738D89DEC /* blue&white_shirt.jpg */; };
 		C59D58DAFEF9B2CF6264046B /* CatalogModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCB0CB3022FA18DF0F705CDC /* CatalogModels.swift */; };
@@ -203,7 +196,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		A11E1111111111111111111A /* PBXContainerItemProxy */ = {
+		894498BF5C2D908D212D6721 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = A1048FBB312222DC4D2C0173 /* Project object */;
 			proxyType = 1;
@@ -220,6 +213,7 @@
 		041F91A0302421483319A03F /* peigshirt.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = peigshirt.jpg; sourceTree = "<group>"; };
 		046D051B543A852E50C27563 /* BrandFont.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandFont.swift; sourceTree = "<group>"; };
 		051FC8D47AC1F1F0A966BF22 /* DiscoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoverView.swift; sourceTree = "<group>"; };
+		05928BC07F9EDB8234CD123C /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		079D1BABD3A3CBEE00A867BB /* harly.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = harly.jpg; sourceTree = "<group>"; };
 		08CB1864AFC614CCFF04A51B /* accessories.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = accessories.jpg; sourceTree = "<group>"; };
 		0A91429262D7759864F7F258 /* test.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = test.jpg; sourceTree = "<group>"; };
@@ -250,22 +244,17 @@
 		334A1B365515D6A263F608B6 /* TryBeforeBuyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TryBeforeBuyView.swift; sourceTree = "<group>"; };
 		339CA0FE2A0F23B738D89DEC /* blue&white_shirt.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "blue&white_shirt.jpg"; sourceTree = "<group>"; };
 		33F2714841F4498218FE11B0 /* LegalCenterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegalCenterView.swift; sourceTree = "<group>"; };
-		377243644250328C32CF3962 /* collections.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = collections.json; sourceTree = "<group>"; };
 		37A3E3F3A406E5DB294B2F6C /* EmbeddedStaticBackend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmbeddedStaticBackend.swift; sourceTree = "<group>"; };
 		37C616911C6625397A3224A5 /* EgyptGovernorate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EgyptGovernorate.swift; sourceTree = "<group>"; };
 		387BBC4AB082B32EB24EBD19 /* peig.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = peig.jpg; sourceTree = "<group>"; };
 		3A36449BC1CADC1352D7CE8E /* Poker Face Tan Ribbed Polo.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "Poker Face Tan Ribbed Polo.jpg"; sourceTree = "<group>"; };
 		3CE00D81A0FE4CE6BDDCDD39 /* iryna-muller--DLmQKLGlbM-unsplash.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "iryna-muller--DLmQKLGlbM-unsplash.jpg"; sourceTree = "<group>"; };
-		3D69C6C45408A9B1E4583BB4 /* support.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = support.json; sourceTree = "<group>"; };
 		3DFD36929B42701BC79835C0 /* Dark Charcoal Chenille Turtleneck.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "Dark Charcoal Chenille Turtleneck.jpg"; sourceTree = "<group>"; };
 		3F1CF836812D9220DA1532D0 /* noir.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = noir.jpg; sourceTree = "<group>"; };
 		3FBBE77BFB4774A2D397342E /* BrandComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandComponents.swift; sourceTree = "<group>"; };
-		4462947419A2063C0EC6AC92 /* BOUTIQUE.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = BOUTIQUE.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		A11E11111111111111111111 /* APIServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIServiceTests.swift; sourceTree = "<group>"; };
-		A11E11111111111111111114 /* AurelienTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AurelienTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		4462947419A2063C0EC6AC92 /* Aurelien.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Aurelien.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4488B08B9899614884322C86 /* italian_jacket.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = italian_jacket.jpg; sourceTree = "<group>"; };
 		46553AC637B092F5712BC94A /* StyleProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyleProfileView.swift; sourceTree = "<group>"; };
-		46B006A1FEC95F02890EF5E6 /* discover.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = discover.json; sourceTree = "<group>"; };
 		46E19BBA03FE0CD2C91DD586 /* StylistStudioView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StylistStudioView.swift; sourceTree = "<group>"; };
 		46EB97CC8401AEDF8EE5F1F7 /* OutfitFeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OutfitFeedView.swift; sourceTree = "<group>"; };
 		4A4E5788F2180B0DCC924E96 /* Black Tapered Cargo Pants.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "Black Tapered Cargo Pants.jpg"; sourceTree = "<group>"; };
@@ -297,7 +286,6 @@
 		5F29A9B976585B1306DB85C1 /* korean.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = korean.jpg; sourceTree = "<group>"; };
 		60BAE02B9259D1D544359060 /* ProductDetailsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductDetailsView.swift; sourceTree = "<group>"; };
 		6109A6C69FB307E092A7112A /* CategorizedErrorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategorizedErrorView.swift; sourceTree = "<group>"; };
-		61202332CE791B5FC2F178DD /* MarketplaceAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketplaceAPIService.swift; sourceTree = "<group>"; };
 		63B10DDA3D626452E03717DC /* look1.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = look1.jpg; sourceTree = "<group>"; };
 		650E4260584DF6F9E24AF44F /* View+BottomInsetBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+BottomInsetBar.swift"; sourceTree = "<group>"; };
 		6552171769068B43B1D59DF4 /* look2.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = look2.jpg; sourceTree = "<group>"; };
@@ -305,13 +293,11 @@
 		6704AB4AFA33FECBF8558E72 /* Cream Geometric Quilted Shacket.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "Cream Geometric Quilted Shacket.jpg"; sourceTree = "<group>"; };
 		6EC4FDAB84694EFC9E4335B3 /* Jost[wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Jost[wght].ttf"; sourceTree = "<group>"; };
 		7068703ED3D07CE7AC5C7ADC /* TabRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabRouter.swift; sourceTree = "<group>"; };
-		707954ACEACD434574E9768B /* state.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = state.json; sourceTree = "<group>"; };
 		73164D2953915D1E38A34A4C /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
 		75B958790502111404480DAA /* ResponsiveLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResponsiveLayout.swift; sourceTree = "<group>"; };
 		76261DCE3ED824658F41BFCF /* ExperienceModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperienceModels.swift; sourceTree = "<group>"; };
 		7667762F276DAB237096BFB7 /* black_soft_jacket.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = black_soft_jacket.jpg; sourceTree = "<group>"; };
 		768239767561E2BAB0054A70 /* boots.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = boots.jpg; sourceTree = "<group>"; };
-		784926F209E853383D5E70D0 /* home.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = home.json; sourceTree = "<group>"; };
 		793ED7F1254B95765ACCEB36 /* peig_suit2.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = peig_suit2.jpg; sourceTree = "<group>"; };
 		79538E9D547091B299F6CD4C /* AppStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStore.swift; sourceTree = "<group>"; };
 		79EB381FB9A1E334AF203DDB /* brown_leather2.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = brown_leather2.jpg; sourceTree = "<group>"; };
@@ -346,7 +332,7 @@
 		A0004004106133FD6A427904 /* Diesel Elastic-Back Chino (Cream).jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "Diesel Elastic-Back Chino (Cream).jpg"; sourceTree = "<group>"; };
 		A19E762F6204DBC4D7AF0888 /* NotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
 		A2E52AF24BE189C06B2696B5 /* leather_crazy_jacket2.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = leather_crazy_jacket2.jpg; sourceTree = "<group>"; };
-		A3733C86D786BEAF75D5F22A /* products.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = products.json; sourceTree = "<group>"; };
+		A3693259A728B59D3F5FB2CA /* APIServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIServiceTests.swift; sourceTree = "<group>"; };
 		A442FD40FBFA942D975C0D2C /* brown_wind_jacket.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = brown_wind_jacket.jpg; sourceTree = "<group>"; };
 		A454F4FBB96DA66B22AF467A /* Diesel Stretch Chino (Beige).jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "Diesel Stretch Chino (Beige).jpg"; sourceTree = "<group>"; };
 		A919E4A9A80446CFCF0B1AEB /* CormorantGaramond[wght].ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "CormorantGaramond[wght].ttf"; sourceTree = "<group>"; };
@@ -376,7 +362,7 @@
 		D509C9019466DCADBBAFB0B9 /* AppShellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppShellView.swift; sourceTree = "<group>"; };
 		D69A3DF3FE1DBAB65152740E /* lether.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = lether.jpg; sourceTree = "<group>"; };
 		D8C3F46A9F9F60272F770CC7 /* SkeletonLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkeletonLoader.swift; sourceTree = "<group>"; };
-		DBA280A772E51FE62884E578 /* boutiques.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = boutiques.json; sourceTree = "<group>"; };
+		DD1CF5CBFF895BA8F7A8F5AE /* BoutiqueAppShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoutiqueAppShortcuts.swift; sourceTree = "<group>"; };
 		DDF8D1438B53BB404C991907 /* AurelienApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AurelienApp.swift; sourceTree = "<group>"; };
 		DEC8DBE439FF917D293B7DE1 /* AppRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRouter.swift; sourceTree = "<group>"; };
 		DFDF6A123234A447BD7E55C2 /* harly2.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = harly2.jpg; sourceTree = "<group>"; };
@@ -401,25 +387,15 @@
 		F2AB1CD85B974A31B927CB31 /* peig_suit.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = peig_suit.jpg; sourceTree = "<group>"; };
 		F3E144A5F84DD05D64FB7AB1 /* Camo Wool Trousers (Gray).jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "Camo Wool Trousers (Gray).jpg"; sourceTree = "<group>"; };
 		F40BB44A133E237D3C1B894D /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
-		F58596BAD765D58B7BE454AF /* legal.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = legal.json; sourceTree = "<group>"; };
 		F5C8D687A5AB6636A5C657AB /* CheckoutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckoutView.swift; sourceTree = "<group>"; };
 		F6CB4CEC08A6EE539802FEDE /* teddy-jacket-cream.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "teddy-jacket-cream.jpg"; sourceTree = "<group>"; };
 		F70A7D58DEFF77DB7C4DE2FD /* go.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = go.png; sourceTree = "<group>"; };
 		F73BA4C65D8D3449F84560D3 /* pocket.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = pocket.jpg; sourceTree = "<group>"; };
 		F852DB05DDC0D72BB242AC17 /* Medium Wash Levi's Cropped Jeans.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "Medium Wash Levi's Cropped Jeans.jpg"; sourceTree = "<group>"; };
 		FAA3D88E6F17601BD39D8C02 /* purblejacket.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = purblejacket.jpg; sourceTree = "<group>"; };
+		FAEF07F52A1E0DDBA5B358E2 /* AurelienTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = AurelienTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		FC80980F8CFBB4D2AF311667 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
-
-/* Begin PBXFrameworksBuildPhase section */
-		A11E11111111111111111117 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		0C62F01BB978E5D0A6D3BA73 /* App */ = {
@@ -428,6 +404,7 @@
 				DEC8DBE439FF917D293B7DE1 /* AppRouter.swift */,
 				79538E9D547091B299F6CD4C /* AppStore.swift */,
 				DDF8D1438B53BB404C991907 /* AurelienApp.swift */,
+				DD1CF5CBFF895BA8F7A8F5AE /* BoutiqueAppShortcuts.swift */,
 				2505278BA79B5232A44C2C7F /* DarkTextFieldStyle.swift */,
 				650E4260584DF6F9E24AF44F /* View+BottomInsetBar.swift */,
 			);
@@ -485,7 +462,6 @@
 			children = (
 				73164D2953915D1E38A34A4C /* APIService.swift */,
 				37A3E3F3A406E5DB294B2F6C /* EmbeddedStaticBackend.swift */,
-				61202332CE791B5FC2F178DD /* MarketplaceAPIService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -493,8 +469,8 @@
 		4C8C93B09A33B43192298233 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				4462947419A2063C0EC6AC92 /* BOUTIQUE.app */,
-				A11E11111111111111111114 /* AurelienTests.xctest */,
+				4462947419A2063C0EC6AC92 /* Aurelien.app */,
+				FAEF07F52A1E0DDBA5B358E2 /* AurelienTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -625,21 +601,6 @@
 			path = Media;
 			sourceTree = "<group>";
 		};
-		51E3EEBF6E9595E4DBA21B24 /* v1 */ = {
-			isa = PBXGroup;
-			children = (
-				DBA280A772E51FE62884E578 /* boutiques.json */,
-				377243644250328C32CF3962 /* collections.json */,
-				46B006A1FEC95F02890EF5E6 /* discover.json */,
-				784926F209E853383D5E70D0 /* home.json */,
-				F58596BAD765D58B7BE454AF /* legal.json */,
-				A3733C86D786BEAF75D5F22A /* products.json */,
-				3D69C6C45408A9B1E4583BB4 /* support.json */,
-			);
-			name = v1;
-			path = "AurelienApp/AURE-LIEN-/public/v1";
-			sourceTree = "<group>";
-		};
 		5349186D69281E9BD4F72F5C /* Networking */ = {
 			isa = PBXGroup;
 			children = (
@@ -670,15 +631,6 @@
 				0B150C1BD94C9088F7832AAC /* AurelienStore.swift */,
 			);
 			path = Store;
-			sourceTree = "<group>";
-		};
-		8E880D497D7E3081EF41D296 /* data */ = {
-			isa = PBXGroup;
-			children = (
-				707954ACEACD434574E9768B /* state.json */,
-			);
-			name = data;
-			path = "AurelienApp/AURE-LIEN-/data";
 			sourceTree = "<group>";
 		};
 		B3E6FE6AC12348EC081565BF /* Screens */ = {
@@ -753,6 +705,7 @@
 			isa = PBXGroup;
 			children = (
 				B28E9A0C2C38B65F7FE26328 /* Assets.xcassets */,
+				05928BC07F9EDB8234CD123C /* PrivacyInfo.xcprivacy */,
 				2B110F11C125E1EF5916D649 /* Fonts */,
 				517AFEE58C76187B047B9A9E /* Media */,
 			);
@@ -763,19 +716,17 @@
 		F5EC14467741532BF0C46D83 = {
 			isa = PBXGroup;
 			children = (
-				8E880D497D7E3081EF41D296 /* data */,
 				E6C922A3321FE3597625AF6A /* Resources */,
 				E4E35D0676A300C7DCAD7D71 /* Sources */,
-				A11E11111111111111111113 /* Tests */,
-				51E3EEBF6E9595E4DBA21B24 /* v1 */,
+				FECA64F921271FA74DDB959E /* Tests */,
 				4C8C93B09A33B43192298233 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		A11E11111111111111111113 /* Tests */ = {
+		FECA64F921271FA74DDB959E /* Tests */ = {
 			isa = PBXGroup;
 			children = (
-				A11E11111111111111111111 /* APIServiceTests.swift */,
+				A3693259A728B59D3F5FB2CA /* APIServiceTests.swift */,
 			);
 			name = Tests;
 			path = AurelienApp/Tests;
@@ -799,27 +750,25 @@
 			packageProductDependencies = (
 			);
 			productName = Aurelien;
-			productReference = 4462947419A2063C0EC6AC92 /* BOUTIQUE.app */;
+			productReference = 4462947419A2063C0EC6AC92 /* Aurelien.app */;
 			productType = "com.apple.product-type.application";
 		};
-		A11E11111111111111111115 /* AurelienTests */ = {
+		9101C88125ABB6042D5381FB /* AurelienTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A11E1111111111111111111D /* Build configuration list for PBXNativeTarget "AurelienTests" */;
+			buildConfigurationList = 5428EFC989AC21E2FB85CC8F /* Build configuration list for PBXNativeTarget "AurelienTests" */;
 			buildPhases = (
-				A11E11111111111111111116 /* Sources */,
-				A11E11111111111111111117 /* Frameworks */,
-				A11E11111111111111111118 /* Resources */,
+				B60CAF74611E27C46A5EEB5F /* Sources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				A11E11111111111111111119 /* PBXTargetDependency */,
+				1FF8A4996F1551A911D120B3 /* PBXTargetDependency */,
 			);
 			name = AurelienTests;
 			packageProductDependencies = (
 			);
 			productName = AurelienTests;
-			productReference = A11E11111111111111111114 /* AurelienTests.xctest */;
+			productReference = FAEF07F52A1E0DDBA5B358E2 /* AurelienTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
@@ -835,8 +784,9 @@
 						DevelopmentTeam = N5YRWQZ5W2;
 						ProvisioningStyle = Automatic;
 					};
-					A11E11111111111111111115 = {
-						TestTargetID = 5C3DEE6DEA8DAAAAA4240352;
+					9101C88125ABB6042D5381FB = {
+						DevelopmentTeam = N5YRWQZ5W2;
+						ProvisioningStyle = Automatic;
 					};
 				};
 			};
@@ -855,19 +805,12 @@
 			projectRoot = "";
 			targets = (
 				5C3DEE6DEA8DAAAAA4240352 /* Aurelien */,
-				A11E11111111111111111115 /* AurelienTests */,
+				9101C88125ABB6042D5381FB /* AurelienTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		A11E11111111111111111118 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		D2EB88DB98F33620C05A646D /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -905,6 +848,7 @@
 				F7115CC02B4AB2D9495BB5C9 /* Medium Wash Cargo Denim Jeans.jpg in Resources */,
 				F0ADF136A227EFA0F4910EB9 /* Medium Wash Levi's Cropped Jeans.jpg in Resources */,
 				B350137E7247F5E8C890B569 /* Poker Face Tan Ribbed Polo.jpg in Resources */,
+				941A4C229006435562C2B211 /* PrivacyInfo.xcprivacy in Resources */,
 				9FDB7485F60F411D35715FC3 /* Ribbed Cargo Knit Pant (Cream).jpg in Resources */,
 				4953B7B9396C27AF8D08CCAB /* Sneakers.jpg in Resources */,
 				13DA7613EDEA7CEA8DF5E9E0 /* Suits.jpg in Resources */,
@@ -920,7 +864,6 @@
 				6C95518DB5F4C4A9F3F4591D /* blue&green2.jpg in Resources */,
 				C489AD390999793F1009223D /* blue&white_shirt.jpg in Resources */,
 				667A52828D446B3478281FAD /* boots.jpg in Resources */,
-				BCA43E53CC07AB3E6A3E39B3 /* boutiques.json in Resources */,
 				2535C3855C6B1C54982238AF /* brown_leather.jpg in Resources */,
 				76F5F9C56B84ABB20AABAECA /* brown_leather2.jpg in Resources */,
 				E495C9C001644A1F631A020B /* brown_suit.jpg in Resources */,
@@ -928,10 +871,8 @@
 				6A12FE956466F9F73D577385 /* brownleather2.jpg in Resources */,
 				F38B6D1F3E86FD9B6E335CB1 /* brownsuit.jpg in Resources */,
 				DA35A692F55B3202F46B0C60 /* collections.jpg in Resources */,
-				C0C6D0A132BADFBA8EEDDD87 /* collections.json in Resources */,
 				CFABA57FE7401F466A1944D8 /* denim.jpg in Resources */,
 				9179631129E9C2C355F70137 /* dirty_leather_jacket.jpg in Resources */,
-				213B96BBD5802031DAAEADBE /* discover.json in Resources */,
 				17899826397A0158A77D9C8C /* footwear.jpg in Resources */,
 				403DA2A4BDAABC4F76661716 /* formal_lines.jpg in Resources */,
 				6E4B855BD7B6D58A0E7BEA52 /* formal_lines2.jpg in Resources */,
@@ -945,7 +886,6 @@
 				96F2C5F3EB424F820D76EF7A /* harly.jpg in Resources */,
 				7D046B9E9D377920A81D24D4 /* harly2.jpg in Resources */,
 				650AF8CC972A295FE8BD1AB7 /* harly_leather_black_jacket.jpg in Resources */,
-				17C8FC9325B68EAE808355C4 /* home.json in Resources */,
 				0FFF6F121DDCC5F697AFE3D7 /* homepage.jpg in Resources */,
 				E89267D11F746D39FF3CBBDB /* icon.png in Resources */,
 				7D7EE61B61953987FF283E27 /* iryna-muller--DLmQKLGlbM-unsplash.jpg in Resources */,
@@ -959,7 +899,6 @@
 				952015761C85946A575DE8F0 /* leather_crazy_jacket.jpg in Resources */,
 				03EF7B307E5C8365A9141146 /* leather_crazy_jacket2.jpg in Resources */,
 				83BE95D681F10146018A2F55 /* leathercrazy.jpg in Resources */,
-				81CFEF2392BCB0FB77524360 /* legal.json in Resources */,
 				890EFCF5845966F6DDD6773B /* lether.jpg in Resources */,
 				22EC86368886DD45587C035E /* light_violet_jacket.jpg in Resources */,
 				02575A4168134952681ECDA1 /* look1.jpg in Resources */,
@@ -980,15 +919,12 @@
 				A45595B0710A5FBF59FC7AFC /* pijam_korean_jacket_black.jpg in Resources */,
 				A0EBC3B255E514E6B1B1979C /* pijam_korean_jacket_black2.jpg in Resources */,
 				C925A28025C41E1C353DD0E5 /* pocket.jpg in Resources */,
-				AAF205A4603C3E9C6BA51124 /* products.json in Resources */,
 				21EF72A161FDA2EB9895609F /* purblejacket.jpg in Resources */,
 				BDEDFAFA7FF0E800003C267A /* robe.jpg in Resources */,
 				F823381BBD86B4A82EFF8772 /* robe2.jpg in Resources */,
 				FE5D9FB8F51B4762FCDB862F /* shirts.jpg in Resources */,
 				38C5F72856E313F8E90A0413 /* simple_leather.jpg in Resources */,
-				6722102D7944C130C714D587 /* state.json in Resources */,
 				CFED5EBBF84050FD9655D6F9 /* sunglasses.jpg in Resources */,
-				B1D9990F308EABD8BEC3BFF5 /* support.json in Resources */,
 				8D87BF85BE878E71B9039CAB /* teddy-jacket-cream.jpg in Resources */,
 				E227EF15189DC08412E9C9A8 /* test.jpg in Resources */,
 				736611AECD4ED0166F78EB0B /* white&green_shirt.jpg in Resources */,
@@ -1000,14 +936,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		A11E11111111111111111116 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				A11E11111111111111111112 /* APIServiceTests.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		94C46253B5B6F4F44200384E /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1025,6 +953,7 @@
 				A3CFE715A029BFD257A226B4 /* AurelienApp.swift in Sources */,
 				A48D376E8F2865DDEC21C7A1 /* AurelienStore.swift in Sources */,
 				4D8748D83DA186469ECF85A8 /* BagView.swift in Sources */,
+				24C226DB72548906423A3DD7 /* BoutiqueAppShortcuts.swift in Sources */,
 				78B5446B6D468EC6B81F4310 /* BoutiqueDashboardView.swift in Sources */,
 				F5D9FD23813211FFCEEC5870 /* BrandComponents.swift in Sources */,
 				2C40EE3E58A971940D78DF05 /* BrandFont.swift in Sources */,
@@ -1053,7 +982,6 @@
 				239079130093A5116DB05358 /* LimitedDropsView.swift in Sources */,
 				42C12EF2E1C1FEDB580E998D /* Logger.swift in Sources */,
 				FC73F5F40691498E1A464B8F /* LoginView.swift in Sources */,
-				7C692E8A00281C2F959E1EE4 /* MarketplaceAPIService.swift in Sources */,
 				01E66CBAEE9156F023EBD569 /* MarketplaceModels.swift in Sources */,
 				9EAE3B24D8ECBD28D6C67DDD /* MobileOnlyHelpers.swift in Sources */,
 				EB77FCD4735CD9E4787C5F96 /* NetworkClient.swift in Sources */,
@@ -1085,17 +1013,75 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B60CAF74611E27C46A5EEB5F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				04EDBA6961915AD5EEC58A87 /* APIServiceTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		A11E11111111111111111119 /* PBXTargetDependency */ = {
+		1FF8A4996F1551A911D120B3 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 5C3DEE6DEA8DAAAAA4240352 /* Aurelien */;
-			targetProxy = A11E1111111111111111111A /* PBXContainerItemProxy */;
+			targetProxy = 894498BF5C2D908D212D6721 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		03D6DCD56B17588688C50C6C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGNING_ALLOWED = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = N5YRWQZ5W2;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.shereenmagdy.aurelien.tests;
+				PRODUCT_NAME = AurelienTests;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BOUTIQUE.app/BOUTIQUE";
+			};
+			name = Release;
+		};
+		2FA1E254A37E5C3BBE8C3358 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGNING_ALLOWED = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = N5YRWQZ5W2;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.shereenmagdy.aurelien.tests;
+				PRODUCT_NAME = AurelienTests;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BOUTIQUE.app/BOUTIQUE";
+			};
+			name = Debug;
+		};
 		5BCC013F6BF46D122DD7BF77 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1161,11 +1147,11 @@
 		C4DF2FD8E9A3B5B50D238C96 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				APP_SHORTCUTS_ENABLE_FLEXIBLE_MATCHING = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_ASSET_PATHS = "\"AurelienApp/Resources\"";
 				DEVELOPMENT_TEAM = N5YRWQZ5W2;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -1187,11 +1173,11 @@
 		EDD13EEEE8E8B1F84C8DAF9E /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				APP_SHORTCUTS_ENABLE_FLEXIBLE_MATCHING = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_ASSET_PATHS = "\"AurelienApp/Resources\"";
 				DEVELOPMENT_TEAM = N5YRWQZ5W2;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -1209,63 +1195,6 @@
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
-		};
-		A11E1111111111111111111B /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGNING_ALLOWED = YES;
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = N5YRWQZ5W2;
-				ENABLE_TESTABILITY = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = AurelienTests;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.shereenmagdy.aurelien.tests;
-				PRODUCT_MODULE_NAME = AurelienTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 5.9;
-				TARGETED_DEVICE_FAMILY = 1;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BOUTIQUE.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/BOUTIQUE";
-			};
-			name = Debug;
-		};
-		A11E1111111111111111111C /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGNING_ALLOWED = YES;
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = N5YRWQZ5W2;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = AurelienTests;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.shereenmagdy.aurelien.tests;
-				PRODUCT_MODULE_NAME = AurelienTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
-				SWIFT_COMPILATION_MODE = wholemodule;
-				SWIFT_OPTIMIZATION_LEVEL = "-O";
-				SWIFT_VERSION = 5.9;
-				TARGETED_DEVICE_FAMILY = 1;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BOUTIQUE.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/BOUTIQUE";
-			};
-			name = Release;
 		};
 		FBBFA2D713F08F817BF1E6DF /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -1334,20 +1263,20 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
+		5428EFC989AC21E2FB85CC8F /* Build configuration list for PBXNativeTarget "AurelienTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2FA1E254A37E5C3BBE8C3358 /* Debug */,
+				03D6DCD56B17588688C50C6C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 		72846B34351F08D255990524 /* Build configuration list for PBXNativeTarget "Aurelien" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				EDD13EEEE8E8B1F84C8DAF9E /* Debug */,
 				C4DF2FD8E9A3B5B50D238C96 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug;
-		};
-		A11E1111111111111111111D /* Build configuration list for PBXNativeTarget "AurelienTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				A11E1111111111111111111B /* Debug */,
-				A11E1111111111111111111C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

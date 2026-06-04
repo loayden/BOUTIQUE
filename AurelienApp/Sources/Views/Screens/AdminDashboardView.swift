@@ -53,8 +53,8 @@ struct AdminDashboardView: View {
             LazyVStack(alignment: .leading, spacing: BrandSpacing.xl) {
                 BrandSectionHeader(
                     eyebrow: "Dashboard",
-                    title: "A phone-first admin summary with the key data up front.",
-                    copy: "Users, products, and orders now stay readable on iPhone instead of collapsing into dense tablet controls."
+                    title: "Operations stay clear, compact, and readable on iPhone.",
+                    copy: "Orders, products, users, and trend lines stay in one quiet operational surface."
                 )
 
                 if let statusMessage {

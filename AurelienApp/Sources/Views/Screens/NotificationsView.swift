@@ -15,7 +15,7 @@ struct NotificationsView: View {
         PhoneScrollScreen { viewport in
             LazyVStack(alignment: .leading, spacing: BrandSpacing.xl) {
                 BrandSectionHeader(
-                    eyebrow: "Notifications",
+                    eyebrow: "Alerts",
                     title: "Order signals, promotions, and client guidance in one place.",
                     copy: "The app keeps operational updates and personalized discovery visible without interrupting the browse."
                 )
@@ -48,7 +48,7 @@ struct NotificationsView: View {
             .padding(.vertical, viewport.horizontalPadding)
             .padding(.bottom, viewport.bottomPadding)
         }
-        .navigationTitle("Notifications")
+        .navigationTitle("Alerts")
         .navigationBarTitleDisplayMode(.inline)
         .boutBackButton("Account")
     }

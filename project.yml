@@ -15,10 +15,6 @@ targets:
           - public/**
       - path: AurelienApp/Resources
         buildPhase: resources
-      - path: AurelienApp/AURE-LIEN-/public/v1
-        buildPhase: resources
-      - path: AurelienApp/AURE-LIEN-/data/state.json
-        buildPhase: resources
     settings:
       base:
         PRODUCT_NAME: BOUTIQUE
@@ -29,8 +25,29 @@ targets:
         TARGETED_DEVICE_FAMILY: 1
         IPHONEOS_DEPLOYMENT_TARGET: 17.0
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        DEVELOPMENT_ASSET_PATHS: "\"AurelienApp/Resources\""
+        APP_SHORTCUTS_ENABLE_FLEXIBLE_MATCHING: NO
         ENABLE_PREVIEWS: YES
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGNING_ALLOWED: YES
+        CODE_SIGN_IDENTITY: "Apple Development"
+        DEVELOPMENT_TEAM: N5YRWQZ5W2
+        PROVISIONING_PROFILE_SPECIFIER: ""
+  AurelienTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: AurelienApp/Tests
+    dependencies:
+      - target: Aurelien
+    settings:
+      base:
+        PRODUCT_NAME: AurelienTests
+        PRODUCT_BUNDLE_IDENTIFIER: com.shereenmagdy.aurelien.tests
+        SWIFT_VERSION: 5.9
+        GENERATE_INFOPLIST_FILE: YES
+        BUNDLE_LOADER: "$(TEST_HOST)"
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/BOUTIQUE.app/BOUTIQUE"
         CODE_SIGN_STYLE: Automatic
         CODE_SIGNING_ALLOWED: YES
         CODE_SIGN_IDENTITY: "Apple Development"
@@ -41,7 +58,12 @@ schemes:
     build:
       targets:
         Aurelien: all
+        AurelienTests: [test]
     run:
       config: Debug
+    test:
+      config: Debug
+      targets:
+        - name: AurelienTests
     archive:
       config: Release

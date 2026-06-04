@@ -30,12 +30,12 @@ public struct FullScreenProductCarousel: View {
                 } label: {
                     Image(systemName: "xmark")
                         .font(.system(size: 15, weight: .light))
-                        .foregroundStyle(Color.white.opacity(0.8))
+                        .foregroundStyle(BrandPalette.textPrimary)
                         .frame(width: 44, height: 44)
-                        .background(.ultraThinMaterial, in: Circle())
+                        .background(BrandPalette.backgroundWarm.opacity(0.94), in: Circle())
                         .overlay(
                             Circle()
-                                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                                .stroke(BrandPalette.hairlineStrong, lineWidth: 0.5)
                         )
                 }
                 .buttonStyle(.plain)
@@ -45,10 +45,14 @@ public struct FullScreenProductCarousel: View {
                 Text(counterText)
                     .font(.system(size: 11, weight: .light))
                     .tracking(4)
-                    .foregroundStyle(Color.white.opacity(0.4))
+                    .foregroundStyle(BrandPalette.textSecondary)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 8)
-                    .background(.ultraThinMaterial, in: Capsule(style: .continuous))
+                    .background(BrandPalette.backgroundWarm.opacity(0.92), in: Capsule(style: .continuous))
+                    .overlay(
+                        Capsule(style: .continuous)
+                            .stroke(BrandPalette.hairlineStrong, lineWidth: 0.5)
+                    )
             }
             .padding(.horizontal, 20)
             .padding(.top, 56)

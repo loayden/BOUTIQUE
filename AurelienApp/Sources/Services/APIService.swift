@@ -4,20 +4,49 @@ import SwiftUI
 
 // MARK: - API Configuration
 enum APIConfig {
-    private static let defaultAPIBaseURL = ""
-    private static let defaultContentBaseURL = ""
+    private static let defaultAPIBaseURL = "https://boutique-api-one.vercel.app/api"
+    private static let defaultContentBaseURL = "https://boutique-api-one.vercel.app/v1"
+    private static let embeddedBackendOptInKey = "AURELIEN_ENABLE_EMBEDDED_BACKEND"
+    private static let debugFallbackAPIBaseURLs = [
+        "http://127.0.0.1:3000/api",
+        "http://127.0.0.1:3104/api",
+        defaultAPIBaseURL,
+    ]
+    private static var runtimeAPIOriginOverride: URL?
 
     static var usesEmbeddedStaticBackend: Bool {
         #if DEBUG
-        configuredValue(for: "AURELIEN_API_BASE_URL") == nil &&
-        configuredValue(for: "AURELIEN_STATIC_CONTENT_BASE_URL") == nil
+        if isRunningAutomatedTests {
+            return true
+        }
+
+        return configuredBoolean(for: embeddedBackendOptInKey)
         #else
         false
         #endif
     }
 
+    static var isRunningAutomatedTests: Bool {
+        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+    }
+
     static var apiBaseURL: String {
         resolvedBaseURL(for: "AURELIEN_API_BASE_URL", fallback: defaultAPIBaseURL)
+    }
+
+    static var requestBaseURLs: [String] {
+        #if DEBUG
+        var candidates = debugFallbackAPIBaseURLs
+        if let configured = configuredValidBaseURL(for: "AURELIEN_API_BASE_URL") {
+            candidates.append(configured)
+        }
+        return deduplicatedValidatedBaseURLs(candidates)
+        #else
+        if let configured = configuredValidBaseURL(for: "AURELIEN_API_BASE_URL") {
+            return [configured]
+        }
+        return deduplicatedValidatedBaseURLs([defaultAPIBaseURL])
+        #endif
     }
 
     static var contentBaseURL: String {
@@ -42,7 +71,43 @@ enum APIConfig {
         return components.url
     }
 
+    static var apiOriginURL: URL? {
+        #if DEBUG
+        if let runtimeAPIOriginOverride {
+            return runtimeAPIOriginOverride
+        }
+        #endif
+
+        guard let baseURL = URL(string: apiBaseURL),
+              let scheme = baseURL.scheme,
+              let host = baseURL.host else {
+            return nil
+        }
+
+        var components = URLComponents()
+        components.scheme = scheme
+        components.host = host
+        components.port = baseURL.port
+        return components.url
+    }
+
     static func resolvedRemoteAssetURLString(for rawValue: String) -> String {
+        resolvedRemoteAssetURLString(
+            for: rawValue,
+            usesEmbeddedStaticBackend: usesEmbeddedStaticBackend,
+            apiOriginURL: apiOriginURL,
+            contentOriginURL: contentOriginURL
+        )
+    }
+
+    static func resolvedRemoteAssetURLString(
+        for rawValue: String,
+        usesEmbeddedStaticBackend: Bool,
+        apiOriginURL: URL?,
+        contentOriginURL: URL?
+    ) -> String {
+        let normalizedAPIOriginURL = normalizedAssetOriginURL(from: apiOriginURL)
+        let normalizedContentOriginURL = normalizedAssetOriginURL(from: contentOriginURL)
         let trimmed = rawValue.trimmingCharacters(in: .whitespacesAndNewlines)
         guard trimmed.isEmpty == false else { return rawValue }
 
@@ -50,24 +115,74 @@ enum APIConfig {
             if let url = URL(string: trimmed),
                let scheme = url.scheme?.lowercased(),
                scheme == "http" || scheme == "https" {
-                return url.path.isEmpty ? trimmed : url.path
+                return url.path.isEmpty ? url.absoluteString : url.path
             }
             return trimmed
         }
 
-        if URL(string: trimmed)?.scheme?.hasPrefix("http") == true {
-            return trimmed
+        if let url = URL(string: trimmed),
+           url.scheme?.hasPrefix("http") == true {
+            if let rebased = rebasedRuntimeAssetURL(from: url, apiOriginURL: normalizedAPIOriginURL) {
+                return rebased
+            }
+            return url.absoluteString
         }
 
-        if trimmed.hasPrefix("/"), let origin = contentOriginURL {
+        if trimmed.hasPrefix("/"), let origin = normalizedAPIOriginURL ?? normalizedContentOriginURL {
             return origin.appendingPathComponent(String(trimmed.dropFirst())).absoluteString
         }
 
-        guard let origin = contentOriginURL else {
+        guard let origin = normalizedAPIOriginURL ?? normalizedContentOriginURL else {
             return trimmed
         }
 
-        return origin.appendingPathComponent(trimmed).absoluteString
+        return origin
+            .appendingPathComponent("uploads", isDirectory: true)
+            .appendingPathComponent(trimmed)
+            .absoluteString
+    }
+
+    private static func normalizedAssetOriginURL(from sourceURL: URL?) -> URL? {
+        guard let sourceURL,
+              let scheme = sourceURL.scheme,
+              let host = sourceURL.host else {
+            return nil
+        }
+
+        var components = URLComponents()
+        components.scheme = scheme
+        components.host = host
+        components.port = sourceURL.port
+        return components.url
+    }
+
+    private static func rebasedRuntimeAssetURL(from sourceURL: URL, apiOriginURL: URL?) -> String? {
+        guard let apiOriginURL,
+              let host = sourceURL.host?.lowercased(),
+              (host == "localhost" || host == "127.0.0.1"),
+              sourceURL.path.hasPrefix("/") else {
+            return nil
+        }
+
+        return apiOriginURL
+            .appendingPathComponent(String(sourceURL.path.dropFirst()))
+            .absoluteString
+    }
+
+    static func noteSuccessfulAPIRequestURL(_ url: URL?) {
+        #if DEBUG
+        guard let url,
+              let scheme = url.scheme,
+              let host = url.host else {
+            return
+        }
+
+        var components = URLComponents()
+        components.scheme = scheme
+        components.host = host
+        components.port = url.port
+        runtimeAPIOriginOverride = components.url
+        #endif
     }
 
     static var headers: [String: String] {
@@ -92,14 +207,7 @@ enum APIConfig {
 
     private static func configuredValidBaseURL(for key: String) -> String? {
         guard let rawValue = configuredValue(for: key) else { return nil }
-        let candidate = normalizedBaseURL(rawValue)
-        guard let url = URL(string: candidate),
-              let scheme = url.scheme?.lowercased(),
-              isAllowedScheme(scheme, forHost: url.host),
-              url.host?.isEmpty == false else {
-            return nil
-        }
-        return candidate
+        return validatedBaseURL(normalizedBaseURL(rawValue))
     }
 
     private static func normalizedBaseURL(_ rawValue: String) -> String {
@@ -127,18 +235,54 @@ enum APIConfig {
         return nil
     }
 
-    private static func resolvedBaseURL(for key: String, fallback: String) -> String {
-        let candidate = normalizedBaseURL(configuredValue(for: key) ?? fallback)
+    private static func configuredBoolean(for key: String) -> Bool {
+        let value = configuredValue(for: key)?.lowercased()
+        switch value {
+        case "1", "true", "yes", "on":
+            return true
+        default:
+            return false
+        }
+    }
 
+    private static func resolvedBaseURL(for key: String, fallback: String) -> String {
+        let fallbackCandidate = normalizedBaseURL(fallback)
+
+        if let configured = configuredValue(for: key),
+           let validated = validatedBaseURL(normalizedBaseURL(configured)) {
+            return validated
+        }
+
+        if let validatedFallback = validatedBaseURL(fallbackCandidate) {
+            return validatedFallback
+        }
+
+        assertionFailure("Base URL for \(key) must be HTTPS, or local HTTP in Debug.")
+        return fallbackCandidate
+    }
+
+    private static func validatedBaseURL(_ candidate: String) -> String? {
         guard let url = URL(string: candidate),
               let scheme = url.scheme?.lowercased(),
               isAllowedScheme(scheme, forHost: url.host),
               url.host?.isEmpty == false else {
-            assertionFailure("Base URL for \(key) must be HTTPS, or local HTTP in Debug.")
-            return fallback
+            return nil
         }
 
         return candidate
+    }
+
+    private static func deduplicatedValidatedBaseURLs(_ candidates: [String]) -> [String] {
+        var seen = Set<String>()
+        var resolved: [String] = []
+
+        for candidate in candidates.compactMap({ validatedBaseURL(normalizedBaseURL($0)) }) {
+            if seen.insert(candidate).inserted {
+                resolved.append(candidate)
+            }
+        }
+
+        return resolved
     }
 
     private static func isAllowedScheme(_ scheme: String, forHost host: String?) -> Bool {
@@ -269,7 +413,7 @@ class APIService: ObservableObject {
 
     private func debugLog(_ message: String) {
         #if DEBUG
-        print("[APIService] \(message)")
+        Logger.debug("APIService: \(message)")
         #endif
     }
 
@@ -328,6 +472,15 @@ class APIService: ObservableObject {
         ongoingRequests.removeValue(forKey: endpoint)
     }
 
+    private func requestKey(for endpoint: String, baseURL: String) -> String {
+        "\(baseURL)|\(normalizedPath(for: endpoint))"
+    }
+
+    private func isLocalDebugRequest(_ request: URLRequest) -> Bool {
+        guard let host = request.url?.host?.lowercased() else { return false }
+        return host == "127.0.0.1" || host == "localhost"
+    }
+
     private func shouldFallbackToCachedResponse(for error: APIError) -> Bool {
         switch error {
         case .networkError, .serverError:
@@ -352,8 +505,12 @@ class APIService: ObservableObject {
 
     // MARK: - Request Deduplication & Cancellation
     func cancelRequest(for endpoint: String) {
-        ongoingRequests[endpoint]?.task.cancel()
-        ongoingRequests.removeValue(forKey: endpoint)
+        let normalizedEndpoint = normalizedPath(for: endpoint)
+        let keys = ongoingRequests.keys.filter { $0.hasSuffix("|\(normalizedEndpoint)") }
+        for key in keys {
+            ongoingRequests[key]?.task.cancel()
+            ongoingRequests.removeValue(forKey: key)
+        }
     }
 
     func cancelAllRequests() {
@@ -518,33 +675,64 @@ class APIService: ObservableObject {
             }
         }
 
+        var lastError: APIError?
         let requestAuthToken = AuthTokenStore.value(for: AuthTokenStore.serviceKey)
-        let request = try makeURLRequest(
-            endpoint,
-            method: method,
-            body: body,
-            authorizationToken: requestAuthToken
-        )
-        let normalizedMethod = method.uppercased()
-        let isGetRequest = normalizedMethod == "GET"
-        let maxAttempts = isGetRequest ? 3 : 1
+        for baseURL in APIConfig.requestBaseURLs {
+            let request = try makeURLRequest(
+                endpoint,
+                baseURL: baseURL,
+                method: method,
+                body: body,
+                authorizationToken: requestAuthToken
+            )
 
-        if NetworkMonitor.shared.isConnected == false {
-            let offlineError = APIError.networkError(URLError(.notConnectedToInternet))
-            self.error = offlineError
-            throw offlineError
+            do {
+                return try await executeRemoteRequest(
+                    request,
+                    endpoint: endpoint,
+                    requestAuthToken: requestAuthToken,
+                    allowAuthRefresh: allowAuthRefresh
+                )
+            } catch let error as APIError {
+                lastError = error
+                let shouldTryFallback = APIConfig.requestBaseURLs.count > 1 && shouldTryNextBaseURL(after: error) && baseURL != APIConfig.requestBaseURLs.last
+                if shouldTryFallback {
+                    debugLog("Retrying \(endpoint) against fallback API base after \(error)")
+                    continue
+                }
+                self.error = error
+                throw error
+            }
         }
 
-        // Prevent duplicate API calls by awaiting the existing GET task.
-        if isGetRequest, let inFlight = ongoingRequests[endpoint] {
-            debugLog("Deduping GET for endpoint \(endpoint)")
+        let fallbackError = lastError ?? APIError.invalidResponse
+        self.error = fallbackError
+        throw fallbackError
+    }
+
+    private func executeRemoteRequest(
+        _ request: URLRequest,
+        endpoint: String,
+        requestAuthToken: String?,
+        allowAuthRefresh: Bool
+    ) async throws -> Data {
+        let normalizedMethod = request.httpMethod?.uppercased() ?? "GET"
+        let isGetRequest = normalizedMethod == "GET"
+        let maxAttempts = isGetRequest ? 3 : 1
+        let requestKey = requestKey(for: endpoint, baseURL: request.url?.deletingLastPathComponent().absoluteString ?? APIConfig.apiBaseURL)
+
+        if NetworkMonitor.shared.isConnected == false && isLocalDebugRequest(request) == false {
+            throw APIError.networkError(URLError(.notConnectedToInternet))
+        }
+
+        if isGetRequest, let inFlight = ongoingRequests[requestKey] {
+            debugLog("Deduping GET for request \(requestKey)")
             return try await inFlight.task.value.0
         }
 
-        // For mutating calls on the same endpoint, cancel stale in-flight work.
-        if !isGetRequest, let inFlight = ongoingRequests[endpoint] {
+        if !isGetRequest, let inFlight = ongoingRequests[requestKey] {
             inFlight.task.cancel()
-            ongoingRequests.removeValue(forKey: endpoint)
+            ongoingRequests.removeValue(forKey: requestKey)
         }
 
         beginRequestLifecycle()
@@ -555,7 +743,7 @@ class APIService: ObservableObject {
 
             while attempt < maxAttempts {
                 do {
-                    debugLog("Request [\(method)] \(request.url?.absoluteString ?? endpoint) attempt \(attempt+1)/\(maxAttempts)")
+                    debugLog("Request [\(normalizedMethod)] \(request.url?.absoluteString ?? endpoint) attempt \(attempt+1)/\(maxAttempts)")
                     let timeoutNanoseconds = UInt64((max(request.timeoutInterval + 2, 10) * 1_000_000_000).rounded())
                     let (data, response) = try await withThrowingTaskGroup(of: (Data, URLResponse).self) { group -> (Data, URLResponse) in
                         group.addTask { try await session.data(for: request) }
@@ -660,17 +848,18 @@ class APIService: ObservableObject {
 
             throw lastError ?? APIError.networkError(NSError(domain: "Unknown", code: -1))
         }
-        ongoingRequests[endpoint] = InFlightRequest(token: requestToken, task: task)
+        ongoingRequests[requestKey] = InFlightRequest(token: requestToken, task: task)
 
         defer {
             endRequestLifecycle()
-            clearInFlightRequest(for: endpoint, token: requestToken)
+            clearInFlightRequest(for: requestKey, token: requestToken)
         }
 
         do {
-            let (data, httpResponse, _) = try await task.value
+            let (data, httpResponse, completedRequest) = try await task.value
 
             if (200...299).contains(httpResponse.statusCode) {
+                APIConfig.noteSuccessfulAPIRequestURL(completedRequest.url)
                 self.error = nil
                 return data
             }
@@ -681,18 +870,20 @@ class APIService: ObservableObject {
                allowsSessionInvalidation(for: endpoint),
                case .unauthorized = error,
                await refreshAuthToken(for: requestAuthToken) {
-                clearInFlightRequest(for: endpoint, token: requestToken)
-                return try await performRequest(endpoint, method: method, body: body, allowAuthRefresh: false)
+                clearInFlightRequest(for: requestKey, token: requestToken)
+                return try await executeRemoteRequest(
+                    request,
+                    endpoint: endpoint,
+                    requestAuthToken: AuthTokenStore.value(for: AuthTokenStore.serviceKey),
+                    allowAuthRefresh: false
+                )
             }
             if case .unauthorized = error {
                 invalidateAuthSessionIfCurrent(requestToken: requestAuthToken, endpoint: endpoint)
             }
-            self.error = error
             throw error
         } catch {
-            let apiError = APIError.networkError(error)
-            self.error = apiError
-            throw apiError
+            throw APIError.networkError(error)
         }
     }
 
@@ -830,45 +1021,52 @@ class APIService: ObservableObject {
     func fetchDiscoverExperience() async throws -> DiscoverExperienceSnapshot {
         async let feedTask = fetchDiscoverFeed()
         async let dropsTask = fetchDiscoverDrops()
-        async let communityTask = fetchDiscoverCommunity()
         async let styleTask = fetchDiscoverStyleDNA()
 
         let feed = (try? await feedTask) ?? []
         let drops = (try? await dropsTask) ?? []
-        let community = (try? await communityTask) ?? DiscoverCommunityData(challenges: [], leaderboard: [])
         let styleProfile = try? await styleTask
 
-        if feed.isEmpty && drops.isEmpty && community.challenges.isEmpty && community.leaderboard.isEmpty {
+        if feed.isEmpty && drops.isEmpty {
             throw APIError.notFound("No discover content is available right now.")
         }
 
         return DiscoverExperienceSnapshot(
             feed: feed,
             drops: drops,
-            challenges: community.challenges,
-            leaderboard: community.leaderboard,
+            challenges: [],
+            leaderboard: [],
             styleProfile: styleProfile
         )
     }
 
     func fetchDiscoverUserState() async throws -> DiscoverUserState {
-        let data = try await fetchCachedOrRemoteData(
-            cacheKey: "discover.user-state",
-            endpoints: ["/discover/me", "/discover/state"]
-        )
+        do {
+            let data = try await fetchCachedOrRemoteData(
+                cacheKey: "discover.user-state",
+                endpoints: ["/discover/me", "/discover/state"]
+            )
 
-        if let state = try? decoder.decode(DiscoverUserState.self, from: data) {
-            return state
+            if let state = try? decoder.decode(DiscoverUserState.self, from: data) {
+                return state
+            }
+
+            return try decodeObject(DiscoverUserState.self, from: data, keys: ["state", "data"])
+        } catch {
+            return .empty
         }
-
-        return try decodeObject(DiscoverUserState.self, from: data, keys: ["state", "data"])
     }
 
     func fetchDiscoverFeed() async throws -> [DiscoverFeedItemData] {
-        let data = try await fetchCachedOrRemoteData(
-            cacheKey: "discover.feed",
-            endpoints: ["/discover/feed", "/outfits/feed", "/outfits", "/feed"]
-        )
+        let data: Data
+        do {
+            data = try await fetchCachedOrRemoteData(
+                cacheKey: "discover.feed",
+                endpoints: ["/discover/feed", "/outfits/feed", "/outfits", "/feed"]
+            )
+        } catch {
+            data = try await fetchStaticContentFile("discover.json")
+        }
 
         let rawOutfits = try decodeArray(BackendDiscoverOutfit.self, from: data, keys: ["items", "outfits", "feed", "data"])
         let catalog = (try? await fetchProducts()) ?? []
@@ -902,10 +1100,15 @@ class APIService: ObservableObject {
     }
 
     func fetchDiscoverDrops() async throws -> [DiscoverDropData] {
-        let data = try await fetchCachedOrRemoteData(
-            cacheKey: "discover.drops",
-            endpoints: ["/discover/drops", "/drops"]
-        )
+        let data: Data
+        do {
+            data = try await fetchCachedOrRemoteData(
+                cacheKey: "discover.drops",
+                endpoints: ["/discover/drops", "/drops"]
+            )
+        } catch {
+            data = try await fetchStaticContentFile("discover.json")
+        }
 
         let rawDrops = try decodeArray(BackendDiscoverDrop.self, from: data, keys: ["drops", "items", "data"])
         return rawDrops.compactMap { drop in
@@ -973,12 +1176,17 @@ class APIService: ObservableObject {
     }
 
     func fetchDiscoverStyleDNA() async throws -> DiscoverStyleDNAProfile {
-        let data = try await fetchCachedOrRemoteData(
-            cacheKey: "discover.styledna",
-            endpoints: ["/discover/style-dna", "/profile/style"]
-        )
+        let data: Data
+        do {
+            data = try await fetchCachedOrRemoteData(
+                cacheKey: "discover.styledna",
+                endpoints: ["/discover/style-dna", "/profile/style"]
+            )
+        } catch {
+            data = try await fetchStaticContentFile("discover.json")
+        }
 
-        let raw = try decodeObject(BackendDiscoverStyleDNA.self, from: data, keys: ["profile", "styleDNA", "data"])
+        let raw = try decodeObject(BackendDiscoverStyleDNA.self, from: data, keys: ["profile", "styleDNA", "defaultStyleDNA", "data"])
         return raw.nativeProfile
     }
 
@@ -1101,10 +1309,15 @@ class APIService: ObservableObject {
     }
 
     func fetchDiscoverSubscriptionPlans() async throws -> [DiscoverSubscriptionPlan] {
-        let data = try await fetchCachedOrRemoteData(
-            cacheKey: "discover.subscription.plans",
-            endpoints: ["/discover/subscription/plans", "/subscription/box/plans", "/subscription/plans"]
-        )
+        let data: Data
+        do {
+            data = try await fetchCachedOrRemoteData(
+                cacheKey: "discover.subscription.plans",
+                endpoints: ["/discover/subscription/plans", "/subscription/box/plans", "/subscription/plans"]
+            )
+        } catch {
+            data = try await fetchStaticContentFile("discover.json")
+        }
         let rawPlans = try decodeArray(BackendDiscoverSubscriptionPlan.self, from: data, keys: ["plans", "items", "data"])
         return rawPlans.map(\.nativePlan)
     }
@@ -1223,47 +1436,109 @@ class APIService: ObservableObject {
         return profile
     }
 
+    func fetchWalletSnapshot() async throws -> WalletSnapshot {
+        let data = try await performRequest("/wallet")
+        if let snapshot = try? decoder.decode(WalletSnapshot.self, from: data) {
+            return snapshot
+        }
+        return try decodeObject(WalletSnapshot.self, from: data, keys: ["wallet", "data"])
+    }
+
+    func createSavedAddress(_ address: SavedAddress) async throws -> [SavedAddress] {
+        let body = try encoder.encode(address)
+        let data = try await performRequest("/wallet/addresses", method: "POST", body: body)
+        return try decodeArray(SavedAddress.self, from: data, keys: ["savedAddresses", "data"])
+    }
+
+    func setPrimarySavedAddress(id: String) async throws -> [SavedAddress] {
+        let safeID = id.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? id
+        let data = try await performRequest("/wallet/addresses/\(safeID)/primary", method: "PATCH", body: nil)
+        return try decodeArray(SavedAddress.self, from: data, keys: ["savedAddresses", "data"])
+    }
+
+    func deleteSavedAddress(id: String) async throws -> [SavedAddress] {
+        let safeID = id.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? id
+        let data = try await performRequest("/wallet/addresses/\(safeID)", method: "DELETE", body: nil)
+        return try decodeArray(SavedAddress.self, from: data, keys: ["savedAddresses", "data"])
+    }
+
+    func fetchNotifications() async throws -> [ClientNotification] {
+        let data = try await performRequest("/notifications")
+        if let notifications = try? decoder.decode([ClientNotification].self, from: data) {
+            return notifications
+        }
+        return try decodeArray(ClientNotification.self, from: data, keys: ["notifications", "items", "data"])
+    }
+
+    func markNotificationRead(id: String) async throws {
+        let safeID = id.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? id
+        _ = try await performRequest("/notifications/\(safeID)/read", method: "PATCH", body: nil)
+    }
+
+    func markAllNotificationsRead() async throws {
+        _ = try await performRequest("/notifications/read-all", method: "POST", body: nil)
+    }
+
+    func deleteNotification(id: String) async throws {
+        let safeID = id.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? id
+        _ = try await performRequest("/notifications/\(safeID)", method: "DELETE", body: nil)
+    }
+
+    func fetchSavedProducts(userId: String? = nil) async throws -> [Product] {
+        _ = userId
+        let data = try await performRequest("/saved/me")
+        return try decodeProductsPayload(from: data)
+    }
+
+    func saveProduct(productId: String, userId: String? = nil) async throws -> [Product] {
+        _ = userId
+        let payload = SavedProductRequest(productId: productId)
+        let body = try encoder.encode(payload)
+        let data = try await performRequest("/saved/me", method: "POST", body: body)
+        return try decodeProductsPayload(from: data)
+    }
+
+    func removeSavedProduct(productId: String, userId: String? = nil) async throws -> [Product] {
+        _ = userId
+        let payload = SavedProductRequest(productId: productId)
+        let body = try encoder.encode(payload)
+        let data = try await performRequest("/saved/me", method: "DELETE", body: body)
+        return try decodeProductsPayload(from: data)
+    }
+
     // MARK: - Products
     func fetchProducts() async throws -> [Product] {
-        if APIConfig.usesEmbeddedStaticBackend {
-            let data = try await performRequest("/products")
-            return try decodeProductsPayload(from: data)
-        }
-
         do {
             let data = try await performRequest("/products")
-            let remoteProducts = try decodeProductsPayload(from: data)
-            if remoteProducts.isEmpty == false {
-                return remoteProducts
+            let products = try decodeProductsPayload(from: data)
+            if products.isEmpty == false {
+                return products
             }
         } catch {
             debugLog("Falling back to static products after /products failed: \(error)")
         }
 
-        return try await fetchStaticProducts()
+        let staticData = try await fetchStaticContentFile("products.json")
+        let products = try decodeProductsPayload(from: staticData)
+        guard products.isEmpty == false else {
+            throw APIError.notFound("No products are available right now.")
+        }
+        return products
     }
     
     func fetchProduct(id: String) async throws -> Product {
-        if APIConfig.usesEmbeddedStaticBackend {
-            let data = try await performRequest("/products/\(id)")
-            if let product = try? decoder.decode(Product.self, from: data) {
-                return product
-            }
-            if let product = try? decoder.decode(BackendProduct.self, from: data) {
-                return product.nativeProduct
-            }
-            return try decodeObject(BackendProduct.self, from: data, keys: ["product", "data"]).nativeProduct
-        }
-
-        let products = try await fetchStaticProducts()
-        if let product = products.first(where: { $0.id == id }) {
+        let data = try await performRequest("/products/\(id)")
+        if let product = try? decoder.decode(Product.self, from: data) {
             return product
         }
-
-        let data = try await performRequest("/products/\(id)")
         if let product = try? decoder.decode(BackendProduct.self, from: data) {
             return product.nativeProduct
         }
+
+        if let product = try? decodeObject(Product.self, from: data, keys: ["product", "data"]) {
+            return product
+        }
+
         let product = try decodeObject(BackendProduct.self, from: data, keys: ["product", "data"])
         return product.nativeProduct
     }
@@ -1395,6 +1670,10 @@ class APIService: ObservableObject {
     
     func deleteUser(id: String) async throws {
         let _: EmptyResponse = try await request("/users/\(id)", method: "DELETE")
+    }
+
+    func deleteCurrentUser() async throws {
+        let _: EmptyResponse = try await request("/account/delete", method: "POST")
     }
     
     // MARK: - Orders
@@ -1586,45 +1865,92 @@ struct EmptyResponse: Codable {}
 
 extension APIService {
     func fetchCollections() async throws -> [CollectionFeature] {
-        let data = try await fetchStaticContentFile("collections.json")
-        return try decoder.decode(CatalogCollectionsContent.self, from: data).collections.map { collection in
-            CollectionFeature(
-                id: collection.id,
-                title: collection.title,
-                subtitle: collection.subtitle,
-                imageName: APIConfig.resolvedRemoteAssetURLString(for: collection.imageName),
-                category: collection.category
-            )
-        }
+        let products = try await fetchProducts()
+        let groupedCounts = Dictionary(grouping: products.filter { $0.isValid && !$0.isExcluded }, by: \.category)
+            .mapValues(\.count)
+
+        return groupedCounts
+            .sorted { lhs, rhs in
+                if lhs.value == rhs.value {
+                    return lhs.key.title < rhs.key.title
+                }
+                return lhs.value > rhs.value
+            }
+            .prefix(6)
+            .map { category, count in
+                CollectionFeature(
+                    id: "collection-\(category.rawValue)",
+                    title: category.title,
+                    subtitle: count == 1 ? "1 live piece ready to shop." : "\(count) live pieces ready to shop.",
+                    imageName: APIConfig.resolvedRemoteAssetURLString(for: category.heroImageName),
+                    category: category
+                )
+            }
     }
 
     func fetchHomeContent() async throws -> CatalogHomeContent {
-        let data = try await fetchStaticContentFile("home.json")
-        let decoded = try decoder.decode(CatalogHomeContent.self, from: data)
-        return CatalogHomeContent(
-            heroStories: decoded.heroStories.map { hero in
-                CatalogHomeHero(
-                    id: hero.id,
-                    eyebrow: hero.eyebrow,
-                    title: hero.title,
-                    subtitle: hero.subtitle,
-                    detail: hero.detail,
-                    imageName: APIConfig.resolvedRemoteAssetURLString(for: hero.imageName),
-                    buttonTitle: hero.buttonTitle
-                )
-            },
-            promotions: decoded.promotions
-        )
+        let products = try await fetchProducts()
+        let liveProducts = products.filter { $0.isValid && !$0.isExcluded }
+        let featured = liveProducts
+            .sorted { lhs, rhs in
+                if lhs.featured == rhs.featured {
+                    return lhs.price > rhs.price
+                }
+                return lhs.featured && !rhs.featured
+            }
+            .prefix(3)
+
+        let heroStories = featured.enumerated().map { index, product in
+            CatalogHomeHero(
+                id: "hero-\(product.id)",
+                eyebrow: index == 0 ? "Editorial Pick" : "Live Catalog",
+                title: product.name,
+                subtitle: product.category.title,
+                detail: product.summary,
+                imageName: APIConfig.resolvedRemoteAssetURLString(for: product.heroImageName),
+                buttonTitle: "Shop Now"
+            )
+        }
+
+        let promotions = [
+            CatalogHomePromotion(
+                id: "promo-catalog",
+                title: "\(liveProducts.count) live products",
+                subtitle: "Shop the same catalog now powering the storefront and the iOS app."
+            ),
+            CatalogHomePromotion(
+                id: "promo-delivery",
+                title: "Fast Cairo dispatch",
+                subtitle: "Checkout shows live delivery and payment availability before order placement."
+            ),
+        ]
+
+        return CatalogHomeContent(heroStories: heroStories, promotions: promotions)
     }
 
     func fetchSupportContent() async throws -> SupportContentPayload {
-        let data = try await fetchStaticContentFile("support.json")
-        return try decoder.decode(SupportContentPayload.self, from: data)
+        do {
+            async let channelsData = performRequest("/support/channels")
+            async let faqsData = performRequest("/support/faqs")
+            let (channels, faqs) = try await (
+                decoder.decode([SupportChannel].self, from: channelsData),
+                decoder.decode([FAQItem].self, from: faqsData)
+            )
+            return SupportContentPayload(channels: channels, faqs: faqs)
+        } catch {
+            let data = try await fetchStaticContentFile("support.json")
+            return try decoder.decode(SupportContentPayload.self, from: data)
+        }
     }
 
     func fetchLegalDocuments() async throws -> [LegalDocument] {
-        let data = try await fetchStaticContentFile("legal.json")
-        return try decoder.decode(LegalContentPayload.self, from: data).documents
+        do {
+            let data = try await performRequest("/legal/documents")
+            return try decoder.decode([LegalDocument].self, from: data)
+        } catch {
+            let data = try await fetchStaticContentFile("legal.json")
+            return try decoder.decode(LegalContentPayload.self, from: data).documents
+        }
     }
 
     func decodeProductsPayload(from data: Data) throws -> [Product] {
@@ -1645,11 +1971,6 @@ extension APIService {
         }
 
         return products.map(\.nativeProduct)
-    }
-
-    func fetchStaticProducts() async throws -> [Product] {
-        let data = try await fetchStaticContentFile("products.json")
-        return try decodeProductsPayload(from: data)
     }
 
     func fetchStaticContentFile(_ fileName: String) async throws -> Data {
@@ -1691,6 +2012,15 @@ struct SignupCredentials: Codable {
     let password: String
     let confirmPassword: String
     let phone: String?
+}
+
+private struct SavedProductRequest: Codable {
+    let productId: String
+}
+
+struct WalletSnapshot: Codable {
+    let savedAddresses: [SavedAddress]
+    let paymentMethods: [StoredPaymentMethod]
 }
 
 struct AuthResponse: Codable {
@@ -2793,16 +3123,16 @@ enum AuthTokenStore {
         guard let data = value.data(using: .utf8) else { return }
         inMemoryValues[key] = value
 
-        let query = baseQuery(for: key)
-        SecItemDelete(query as CFDictionary)
+        SecItemDelete(identityQuery(for: key) as CFDictionary)
 
-        var addQuery = query
+        var addQuery = identityQuery(for: key)
+        addQuery[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
         addQuery[kSecValueData as String] = data
         SecItemAdd(addQuery as CFDictionary, nil)
     }
 
     static func value(for key: String) -> String? {
-        var query = baseQuery(for: key)
+        var query = identityQuery(for: key)
         query[kSecReturnData as String] = true
         query[kSecMatchLimit as String] = kSecMatchLimitOne
 
@@ -2821,15 +3151,14 @@ enum AuthTokenStore {
 
     static func deleteValue(for key: String) {
         inMemoryValues.removeValue(forKey: key)
-        SecItemDelete(baseQuery(for: key) as CFDictionary)
+        SecItemDelete(identityQuery(for: key) as CFDictionary)
     }
 
-    private static func baseQuery(for key: String) -> [String: Any] {
+    private static func identityQuery(for key: String) -> [String: Any] {
         [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: "com.shereenmagdy.aurelien",
-            kSecAttrAccount as String: key,
-            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+            kSecAttrAccount as String: key
         ]
     }
 }

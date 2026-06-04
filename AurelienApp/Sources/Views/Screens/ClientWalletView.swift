@@ -155,7 +155,7 @@ struct ClientWalletView: View {
             BrandSectionHeader(
                 eyebrow: "Payment",
                 title: "Only active payment methods are shown.",
-                copy: "Cards and Apple Pay are hidden until a tokenized payment provider is connected. Checkout currently supports Cash on Delivery and Vodafone Cash order requests."
+                copy: "Only payment methods that can complete a real order should appear here. Checkout currently supports Cash on Delivery and Vodafone Cash."
             )
 
             PreferenceCard(
@@ -181,9 +181,9 @@ struct ClientWalletView: View {
             )
 
             PreferenceCard(
-                title: "Order Alerts",
+                title: "In-App Alerts",
                 subtitle: "Active",
-                detail: "Operational updates remain visible in the notification center with unread tracking."
+                detail: "Operational updates remain visible inside the app with unread tracking."
             )
 
             PreferenceCard(

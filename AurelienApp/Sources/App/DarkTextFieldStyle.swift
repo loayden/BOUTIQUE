@@ -9,11 +9,7 @@ public struct DarkTextFieldStyle: TextFieldStyle {
             .frame(minHeight: 52)
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(.ultraThinMaterial)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(Color.boutGlassBottom)
-                    )
+                    .fill(BrandPalette.surfaceRaised)
                     .overlay(
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
                             .stroke(BrandPalette.hairline, lineWidth: 1)

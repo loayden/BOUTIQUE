@@ -5,5 +5,7 @@ struct ProductDetailsView: View {
 
     var body: some View {
         ProductDetailView(product: product)
+            .navigationBarBackButtonHidden(true)
+            .toolbar(.hidden, for: .navigationBar)
     }
 }

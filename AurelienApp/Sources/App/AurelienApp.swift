@@ -4,21 +4,37 @@ import SwiftUI
 @main
 struct BoutApp: App {
     @Environment(\.scenePhase) private var scenePhase
-    @State private var store = AurelienStore()
-    @State private var networkMonitor = NetworkMonitor.shared
+    @State private var store: AurelienStore
+    @State private var networkMonitor: NetworkMonitor
 
     init() {
         APIConfig.validateLaunchConfiguration()
+        AppExperiencePolicy.validateLaunchConfiguration()
         BrandAppearance.configure()
+        _store = State(
+            initialValue: AurelienStore(
+                startBackgroundTasks: !APIConfig.isRunningAutomatedTests,
+                restorePersistedSession: !APIConfig.isRunningAutomatedTests
+            )
+        )
+        _networkMonitor = State(initialValue: APIConfig.isRunningAutomatedTests ? .testing : .shared)
     }
 
     var body: some Scene {
         WindowGroup {
+            rootView
+        }
+    }
+
+    @ViewBuilder
+    private var rootView: some View {
+        if APIConfig.isRunningAutomatedTests {
+            TestHostBootstrapView()
+        } else {
             AppShellView()
                 .environment(store)
                 .environment(networkMonitor)
                 .tint(BrandPalette.gold)
-                .preferredColorScheme(.light)
                 .mobileOnly()
                 .onChange(of: scenePhase) { _, phase in
                     switch phase {
@@ -40,6 +56,7 @@ struct BoutApp: App {
 @Observable
 final class NetworkMonitor {
     static let shared = NetworkMonitor()
+    static let testing = NetworkMonitor(startMonitoring: false)
 
     private let monitor = NWPathMonitor()
     private let queue = DispatchQueue(label: "com.shereenmagdy.aurelien.network-monitor")
@@ -48,7 +65,8 @@ final class NetworkMonitor {
     var isExpensive = false
     var statusDescription = "Online"
 
-    private init() {
+    private init(startMonitoring: Bool = true) {
+        guard startMonitoring else { return }
         monitor.pathUpdateHandler = { [weak self] path in
             Task { @MainActor in
                 self?.apply(path: path)
@@ -75,6 +93,14 @@ final class NetworkMonitor {
         @unknown default:
             statusDescription = "Network status unavailable"
         }
+    }
+}
+
+private struct TestHostBootstrapView: View {
+    var body: some View {
+        Color.clear
+            .ignoresSafeArea()
+            .accessibilityHidden(true)
     }
 }
 

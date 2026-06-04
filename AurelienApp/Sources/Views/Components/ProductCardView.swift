@@ -41,11 +41,11 @@ private enum ProductBadgeStyle {
     var background: Color {
         switch self {
         case .new:
-            return BrandPalette.steel.opacity(0.88)
+            return BrandPalette.steel.opacity(0.90)
         case .bestseller:
-            return BrandPalette.gold.opacity(0.9)
+            return BrandPalette.gold.opacity(0.94)
         case .trending:
-            return BrandPalette.rose.opacity(0.88)
+            return BrandPalette.rose.opacity(0.90)
         }
     }
 
@@ -68,158 +68,121 @@ private struct ProductCardGalleryImage: View {
                 switch phase {
                 case .success(let image):
                     image.resizable()
+                case .failure:
+                    fallbackImage ?? placeholder
                 default:
-                    Rectangle().fill(Color.white.opacity(0.04))
+                    fallbackImage ?? placeholder
                 }
             }
         } else {
             MediaImage(name: name)
         }
     }
+
+    private var fallbackImage: AnyView? {
+        guard let fallbackName = URL(string: name)?.lastPathComponent,
+              let image = BrandMediaLibrary.image(named: fallbackName) else {
+            return nil
+        }
+
+        return AnyView(
+            Image(uiImage: image)
+                .resizable()
+        )
+    }
+
+    private var placeholder: AnyView {
+        AnyView(
+            Rectangle()
+                .fill(BrandPalette.productMediaBackground)
+        )
+    }
 }
 
-private struct ProductCardCarousel: View {
+private struct ProductCardMedia: View {
     let images: [String]
     let badgeStyle: ProductBadgeStyle?
     let inWishlist: Bool
     let onWishlist: () -> Void
 
     @Binding var currentIndex: Int
-    @State private var autoplayTask: Task<Void, Never>?
 
     var body: some View {
-        ZStack {
-            if images.isEmpty {
-                Rectangle().fill(Color.white.opacity(0.04))
-            } else {
-                TabView(selection: $currentIndex) {
-                    ForEach(Array(images.enumerated()), id: \.offset) { index, image in
-                        ProductCardGalleryImage(name: image)
-                            .scaledToFill()
-                            .clipped()
-                            .tag(index)
-                    }
-                }
-                .tabViewStyle(.page(indexDisplayMode: .never))
-            }
-
-            LinearGradient(
-                colors: [.black.opacity(0.72), .black.opacity(0.16), .clear],
-                startPoint: .bottom,
-                endPoint: .top
-            )
-            .allowsHitTesting(false)
-
-            if images.count > 1 {
-                VStack {
-                    Spacer()
-
-                    HStack(spacing: 3) {
-                        ForEach(0..<images.count, id: \.self) { index in
-                            Capsule()
-                                .fill(
-                                    index < currentIndex
-                                    ? Color.white.opacity(0.45)
-                                    : index == currentIndex
-                                        ? BrandPalette.gold.opacity(0.9)
-                                        : Color.white.opacity(0.18)
-                                )
-                                .frame(height: 2)
-                                .animation(.easeInOut(duration: 0.25), value: currentIndex)
+        ZStack(alignment: .topTrailing) {
+            ZStack(alignment: .bottom) {
+                if images.count > 1 {
+                    TabView(selection: $currentIndex) {
+                        ForEach(Array(images.enumerated()), id: \.offset) { index, image in
+                            mediaFrame(for: image)
+                                .tag(index)
                         }
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 14)
+                    .tabViewStyle(.page(indexDisplayMode: .never))
+                } else {
+                    mediaFrame(for: images.first ?? "")
                 }
+
+                LinearGradient(
+                    colors: [.clear, .clear, BrandPalette.background.opacity(0.18)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
                 .allowsHitTesting(false)
-            }
 
-            VStack {
-                HStack {
-                    if let badgeStyle {
-                        Text(badgeStyle.label.uppercased())
-                            .font(.system(size: 9, weight: .medium))
-                            .tracking(1.6)
-                            .foregroundStyle(badgeStyle.foreground)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(
-                                badgeStyle.background,
-                                in: Capsule(style: .continuous)
-                            )
-                    }
-
-                    Spacer()
-                }
-                .padding(12)
-
-                Spacer()
-            }
-            .allowsHitTesting(false)
-
-            VStack {
-                Spacer()
-
-                HStack {
-                    Spacer()
-
-                    Button(action: onWishlist) {
-                        ZStack {
-                            Circle()
-                                .fill(
-                                    inWishlist
-                                    ? Color.red.opacity(0.34)
-                                    : Color.white.opacity(0.08)
-                                )
-                                .background(.ultraThinMaterial, in: Circle())
-                                .overlay(
-                                    Circle()
-                                        .stroke(
-                                            inWishlist ? Color.red.opacity(0.34) : Color.white.opacity(0.12),
-                                            lineWidth: 1
-                                        )
-                                )
-                                .frame(width: 44, height: 44)
-
-                            Image(systemName: inWishlist ? "heart.fill" : "heart")
-                                .font(.system(size: 15, weight: .light))
-                                .foregroundStyle(inWishlist ? .red : Color.white.opacity(0.72))
+                if images.count > 1 {
+                    HStack(spacing: 5) {
+                        ForEach(images.indices, id: \.self) { index in
+                            Capsule(style: .continuous)
+                                .fill(index == currentIndex ? BrandPalette.goldDeep : Color.white.opacity(0.60))
+                                .frame(width: index == currentIndex ? 18 : 6, height: 6)
+                                .animation(.easeInOut(duration: 0.2), value: currentIndex)
                         }
                     }
-                    .buttonStyle(.plain)
-                    .padding(12)
+                    .padding(.bottom, 12)
+                    .allowsHitTesting(false)
                 }
             }
-        }
-        .onAppear {
-            startAutoplay()
-        }
-        .onDisappear {
-            stopAutoplay()
+            .background(BrandPalette.productMediaBackground)
+
+            VStack(alignment: .trailing, spacing: 10) {
+                if let badgeStyle {
+                    Text(badgeStyle.label.uppercased())
+                        .font(BrandFont.mobileCaption2())
+                        .tracking(1.8)
+                        .foregroundStyle(badgeStyle.foreground)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(badgeStyle.background, in: Capsule(style: .continuous))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
+                Button(action: onWishlist) {
+                    Image(systemName: inWishlist ? "heart.fill" : "heart")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(inWishlist ? BrandPalette.goldDeep : BrandPalette.textPrimary)
+                        .frame(width: 44, height: 44)
+                        .background(
+                            Circle()
+                                .fill(BrandPalette.backgroundWarm.opacity(0.94))
+                        )
+                        .overlay(
+                            Circle()
+                                .stroke(inWishlist ? BrandPalette.goldBorder : BrandPalette.hairlineStrong, lineWidth: 0.5)
+                        )
+                }
+                .buttonStyle(.plain)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+            }
+            .padding(12)
         }
     }
 
-    private func startAutoplay() {
-        guard images.count > 1 else { return }
-
-        autoplayTask?.cancel()
-        autoplayTask = Task {
-            while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 3_000_000_000)
-                guard !Task.isCancelled else { return }
-
-                await MainActor.run {
-                    withAnimation(.easeInOut(duration: 0.45)) {
-                        currentIndex = (currentIndex + 1) % images.count
-                    }
-                }
-            }
-        }
-    }
-
-    private func stopAutoplay() {
-        autoplayTask?.cancel()
-        autoplayTask = nil
+    private func mediaFrame(for image: String) -> some View {
+        ProductCardGalleryImage(name: image)
+            .scaledToFill()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(BrandPalette.productMediaBackground)
+            .clipped()
     }
 }
 
@@ -227,273 +190,211 @@ private struct ProductCardDetailsPanel: View {
     let product: Product
     let style: ProductCardView.CardStyle
     let compact: Bool
+    let primaryActionTitle: String
 
     @Binding var selectedSize: String?
     @Binding var selectedColor: Colorway?
     @Binding var addedToCart: Bool
     @Binding var cartLoading: Bool
     @Binding var feedbackError: String?
-    @Binding var detailsExpanded: Bool
 
-    let onAddToCart: () -> Void
+    let onPrimaryAction: () -> Void
     let onViewDetails: () -> Void
 
-    private var titleSize: CGFloat {
-        switch style {
-        case .fullscreen:
-            return 24
-        case .grid:
-            return compact ? 17 : 20
-        case .list:
-            return 18
-        }
+    private var isFullscreen: Bool {
+        style == .fullscreen
     }
 
-    private var bodyCopySize: CGFloat {
-        compact ? 11 : 12
+    private var titleFont: Font {
+        if isFullscreen {
+            return BrandFont.serif(26, relativeTo: .title2)
+        }
+        return BrandFont.serif(compact ? 17 : 20, relativeTo: .headline)
     }
 
-    private var trustLabel: String {
-        if let rating = product.ratingDisplayValue {
-            return rating
+    private var summaryLineLimit: Int {
+        if isFullscreen {
+            return 4
         }
-        return "New"
+        return compact ? 2 : 3
+    }
+
+    private var supportingText: String {
+        if let reviewVolumeText = product.reviewVolumeText {
+            return reviewVolumeText
+        }
+        return product.delivery.isEmpty ? product.availabilityNote : product.delivery
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Rectangle()
-                .fill(
-                    LinearGradient(
-                        colors: [.clear, Color.boutBorderStrong, .clear],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-                .frame(height: 1)
-
-            VStack(alignment: .leading, spacing: 12) {
-                if let feedbackError {
-                    Text(feedbackError.uppercased())
-                        .font(.system(size: 9, weight: .light))
-                        .tracking(3)
-                        .foregroundStyle(BrandPalette.error)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(
-                            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .fill(BrandPalette.error.opacity(0.08))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                        .stroke(BrandPalette.error.opacity(0.18), lineWidth: 1)
-                                )
-                        )
-                        .transition(.opacity.combined(with: .move(edge: .top)))
-                }
-
-                HStack(alignment: .center, spacing: 8) {
-                    Text(product.category.title.uppercased())
-                        .font(.system(size: 9, weight: .medium))
-                        .tracking(1.8)
-                        .foregroundStyle(BrandPalette.textSecondary)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 7)
-                        .background(
-                            Capsule(style: .continuous)
-                                .fill(Color.boutGold.opacity(0.08))
-                                .overlay(
-                                    Capsule(style: .continuous)
-                                        .stroke(Color.boutBorder, lineWidth: 0.5)
-                                )
-                        )
-
-                    Spacer(minLength: 0)
-
-                    HStack(spacing: 4) {
-                        Image(systemName: product.ratingDisplayValue == nil ? "sparkles" : "star.fill")
-                            .font(.system(size: 10, weight: .medium))
-                        Text(trustLabel)
-                            .font(.system(size: 10, weight: .medium))
-                    }
-                    .foregroundStyle(product.ratingDisplayValue == nil ? BrandPalette.textPrimary : Color.boutCreamTop)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 7)
+        VStack(alignment: .leading, spacing: isFullscreen ? 16 : 12) {
+            if let feedbackError {
+                Text(feedbackError)
+                    .font(BrandFont.mobileCaption2())
+                    .foregroundStyle(BrandPalette.error)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .background(
-                        Capsule(style: .continuous)
-                            .fill(product.ratingDisplayValue == nil ? Color.boutGlassBottom : Color.boutButtonEnd)
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(BrandPalette.error.opacity(0.08))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .stroke(BrandPalette.error.opacity(0.18), lineWidth: 0.5)
+                            )
                     )
-                }
-
-                Text(product.name)
-                    .font(BrandFont.serif(titleSize, relativeTo: .title2))
-                    .fontWeight(.light)
-                    .foregroundStyle(BrandPalette.textPrimary)
-                    .lineLimit(style == .fullscreen ? 3 : 2)
-                    .lineSpacing(2)
-
-                HStack(alignment: .bottom) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Price".uppercased())
-                            .font(.system(size: 9, weight: .medium))
-                            .tracking(1.6)
-                            .foregroundStyle(BrandPalette.textMuted)
-
-                        Text(BrandFormatter.price(product.price))
-                            .font(BrandFont.serif(style == .fullscreen ? 28 : 22, relativeTo: .title3))
-                            .fontWeight(.light)
-                            .foregroundStyle(BrandPalette.gold)
-                    }
-
-                    Spacer()
-
-                    VStack(alignment: .trailing, spacing: 4) {
-                        HStack(spacing: 4) {
-                            Circle()
-                                .fill(product.isInStock ? (product.isLowStock ? BrandPalette.rose : BrandPalette.sage) : Color.red.opacity(0.82))
-                                .frame(width: 7, height: 7)
-
-                            Text(product.stockLabel)
-                                .font(.system(size: 9, weight: .light))
-                                .tracking(1.4)
-                                .foregroundStyle(BrandPalette.textSecondary)
-                        }
-
-                        if let reviewVolumeText = product.reviewVolumeText {
-                            Text(reviewVolumeText)
-                                .font(.system(size: 9, weight: .light))
-                                .foregroundStyle(BrandPalette.textMuted)
-                        }
-                    }
-                }
-
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        detailChip(
-                            icon: "shippingbox",
-                            title: product.delivery.isEmpty ? "Fast delivery" : product.delivery
-                        )
-
-                        if let primaryColor = product.colors.first {
-                            detailChip(
-                                icon: "circle.fill",
-                                title: product.colors.count > 1 ? "\(primaryColor.name) +\(product.colors.count - 1)" : primaryColor.name,
-                                tint: Color(hex: primaryColor.hex)
-                            )
-                        }
-
-                        if product.sizes.isEmpty == false {
-                            detailChip(
-                                icon: "ruler",
-                                title: product.sizes.count == 1 ? product.sizes[0] : "\(product.sizes.first ?? "")-\(product.sizes.last ?? "")"
-                            )
-                        }
-                    }
-                }
-
-                if style == .grid {
-                    expandButton
-                }
-
-                if detailsExpanded || style == .fullscreen {
-                    expandedSection
-                        .transition(.opacity.combined(with: .move(edge: .bottom)))
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-            .background(
-                LinearGradient(
-                    colors: [Color.boutGlassTop, Color.boutGlassBottom, Color.boutCream.opacity(0.70)],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .background(.thinMaterial)
-            )
-        }
-    }
-
-    private var expandedSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            if !product.summary.isEmpty {
-                Text(product.summary)
-                    .font(.system(size: bodyCopySize, weight: .light))
-                    .tracking(0.3)
-                    .foregroundStyle(BrandPalette.textSecondary)
-                    .lineSpacing(3)
-                    .lineLimit(style == .fullscreen ? 4 : 3)
             }
 
-            HStack(spacing: 8) {
-                miniStat(
-                    "Sizing",
-                    value: selectedSize
-                        ?? (product.sizes.isEmpty ? "Open" : "\(product.sizes.first ?? "") - \(product.sizes.last ?? "")")
-                )
-                miniStat("Palette", value: selectedColor?.name ?? (product.colors.first?.name ?? "Mono"))
-                miniStat("Status", value: product.availabilityNote)
-            }
+            HStack(alignment: .top, spacing: 12) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(product.category.title.uppercased())
+                        .font(BrandFont.mobileCaption2())
+                        .tracking(2.4)
+                        .foregroundStyle(BrandPalette.textSecondary)
 
-            if !product.sizes.isEmpty {
-                sizeSelector
-            }
-
-            if !product.colors.isEmpty {
-                colorSelector
-            }
-
-            HStack(spacing: 6) {
-                Image(systemName: product.ratingDisplayValue == nil ? "star.slash" : "star.fill")
-                    .font(.system(size: 11))
-                    .foregroundStyle(BrandPalette.gold)
-
-                Text(product.ratingDisplayValue ?? "Rating pending")
-                    .font(.system(size: 11, weight: .light))
-                    .tracking(2)
-                    .foregroundStyle(BrandPalette.textSecondary)
-
-                if let reviewVolumeText = product.reviewVolumeText {
-                    Text(reviewVolumeText)
-                        .font(.system(size: 10, weight: .light))
-                        .foregroundStyle(BrandPalette.textMuted)
+                    Text(product.name)
+                        .font(titleFont)
+                        .foregroundStyle(BrandPalette.textPrimary)
+                        .lineLimit(isFullscreen ? 3 : 2)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
+
+                Spacer(minLength: 8)
+
+                availabilityPill
             }
 
-            ctaRow
-        }
-    }
-
-    private func miniStat(_ label: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Text(label.uppercased())
-                .font(.system(size: 7, weight: .light))
-                .tracking(4)
-                .foregroundStyle(BrandPalette.textMuted)
-
-            Text(value)
-                .font(.system(size: 10, weight: .light))
-                .tracking(1.5)
+            Text(product.summary)
+                .font(BrandFont.mobileCaption())
                 .foregroundStyle(BrandPalette.textSecondary)
-                .lineLimit(1)
+                .lineSpacing(3)
+                .lineLimit(summaryLineLimit)
+
+            HStack(alignment: .firstTextBaseline) {
+                Text(BrandFormatter.price(product.price))
+                    .font(BrandFont.serif(isFullscreen ? 30 : 24, relativeTo: .title3))
+                    .foregroundStyle(BrandPalette.goldDeep)
+
+                Spacer(minLength: 12)
+
+                if let rating = product.ratingDisplayValue {
+                    HStack(spacing: 5) {
+                        Image(systemName: "star.fill")
+                            .font(.system(size: 10, weight: .semibold))
+                        Text(rating)
+                            .font(BrandFont.mobileCaption2())
+                    }
+                    .foregroundStyle(BrandPalette.goldDeep)
+                }
+            }
+
+            if isFullscreen {
+                if !product.sizes.isEmpty {
+                    sizeSelector
+                }
+
+                if !product.colors.isEmpty {
+                    colorSelector
+                }
+
+                trustStrip
+                fullScreenActionRow
+            } else {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text(supportingText)
+                        .font(BrandFont.mobileCaption())
+                        .foregroundStyle(BrandPalette.textSecondary)
+                        .lineLimit(2)
+
+                    Button(action: onPrimaryAction) {
+                        HStack(spacing: 8) {
+                            Image(systemName: compactActionIcon)
+                                .font(.system(size: 13, weight: .medium))
+                            Text(primaryActionTitle)
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(
+                        BrandCapsuleButtonStyle(
+                            tone: product.isInStock ? .gold : .chrome,
+                            horizontalPadding: 18
+                        )
+                    )
+                    .disabled(cartLoading || (!product.isInStock && primaryActionTitle == "Out of Stock"))
+                }
+            }
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(isFullscreen ? 18 : 16)
         .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(Color.boutGlassBottom)
+            RoundedRectangle(cornerRadius: isFullscreen ? 22 : BrandRadius.card, style: .continuous)
+                .fill(isFullscreen ? BrandPalette.backgroundWarm.opacity(0.96) : BrandPalette.surfaceRaised)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .stroke(Color.boutBorder, lineWidth: 0.5)
+                    RoundedRectangle(cornerRadius: isFullscreen ? 22 : BrandRadius.card, style: .continuous)
+                        .stroke(BrandPalette.hairlineStrong, lineWidth: 0.5)
                 )
         )
     }
 
-    private var sizeSelector: some View {
+    private var availabilityPill: some View {
+        HStack(spacing: 6) {
+            Circle()
+                .fill(product.isInStock ? (product.isLowStock ? BrandPalette.rose : BrandPalette.sage) : BrandPalette.error)
+                .frame(width: 7, height: 7)
+
+            Text(product.stockLabel.uppercased())
+                .font(BrandFont.mobileCaption2())
+                .tracking(1.6)
+                .foregroundStyle(product.isInStock ? BrandPalette.textSecondary : BrandPalette.error)
+                .lineLimit(1)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 7)
+        .background(
+            Capsule(style: .continuous)
+                .fill(BrandPalette.backgroundWarm)
+                .overlay(
+                    Capsule(style: .continuous)
+                        .stroke(BrandPalette.hairlineStrong, lineWidth: 0.5)
+                )
+        )
+    }
+
+    private var trustStrip: some View {
         VStack(alignment: .leading, spacing: 8) {
+            trustRow(icon: "shippingbox", text: product.delivery.isEmpty ? "Delivery timing confirmed at checkout." : product.delivery)
+            trustRow(icon: "arrow.uturn.backward.circle", text: product.returns)
+            trustRow(icon: "checkmark.seal", text: product.availabilityNote)
+        }
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(BrandPalette.surface)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(BrandPalette.hairline, lineWidth: 0.5)
+                )
+        )
+    }
+
+    private func trustRow(icon: String, text: String) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(BrandPalette.goldDeep)
+
+            Text(text)
+                .font(BrandFont.mobileCaption())
+                .foregroundStyle(BrandPalette.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var sizeSelector: some View {
+        VStack(alignment: .leading, spacing: 10) {
             Text("SIZE")
-                .font(.system(size: 8, weight: .light))
-                .tracking(5)
-                .foregroundStyle(BrandPalette.textMuted)
+                .font(BrandFont.mobileCaption2())
+                .tracking(2.4)
+                .foregroundStyle(BrandPalette.textSecondary)
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
@@ -501,26 +402,23 @@ private struct ProductCardDetailsPanel: View {
                         let isSelected = selectedSize == size
 
                         Button {
-                            withAnimation(.spring(response: 0.28)) {
-                                selectedSize = isSelected ? nil : size
+                            withAnimation(.easeInOut(duration: 0.18)) {
+                                selectedSize = size
                             }
                             BrandHaptics.selection()
                         } label: {
                             Text(size)
-                                .font(.system(size: 11, weight: .light))
-                                .tracking(2)
-                                .foregroundStyle(isSelected ? BrandPalette.gold : BrandPalette.textSecondary)
+                                .font(BrandFont.mobileCaption())
+                                .foregroundStyle(isSelected ? BrandPalette.backgroundWarm : BrandPalette.textPrimary)
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 10)
+                                .frame(minHeight: 44)
                                 .background(
                                     Capsule(style: .continuous)
-                                        .fill(isSelected ? Color.boutGold.opacity(0.14) : Color.boutGlassBottom)
+                                        .fill(isSelected ? BrandPalette.textPrimary : BrandPalette.backgroundWarm)
                                         .overlay(
                                             Capsule(style: .continuous)
-                                                .stroke(
-                                                    isSelected ? Color.boutGold.opacity(0.5) : Color.boutBorder,
-                                                    lineWidth: 1
-                                                )
+                                                .stroke(isSelected ? BrandPalette.textPrimary : BrandPalette.hairlineStrong, lineWidth: 0.5)
                                         )
                                 )
                         }
@@ -532,163 +430,95 @@ private struct ProductCardDetailsPanel: View {
     }
 
     private var colorSelector: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 6) {
                 Text("COLOR")
-                    .font(.system(size: 8, weight: .light))
-                    .tracking(5)
-                    .foregroundStyle(BrandPalette.textMuted)
+                    .font(BrandFont.mobileCaption2())
+                    .tracking(2.4)
+                    .foregroundStyle(BrandPalette.textSecondary)
 
                 if let selectedColor {
-                    Text("- \(selectedColor.name)")
-                        .font(BrandFont.serif(12, relativeTo: .caption))
-                        .italic()
+                    Text(selectedColor.name)
+                        .font(BrandFont.mobileCaption())
                         .foregroundStyle(BrandPalette.textSecondary)
                 }
             }
 
-            HStack(spacing: 10) {
-                ForEach(product.colors, id: \.self) { colorway in
-                    let isSelected = selectedColor == colorway
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(product.colors, id: \.self) { colorway in
+                        let isSelected = selectedColor == colorway
 
-                    Button {
-                        withAnimation(.spring(response: 0.28)) {
-                            selectedColor = isSelected ? nil : colorway
-                        }
-                        BrandHaptics.selection()
-                    } label: {
-                        Circle()
-                            .fill(Color(hex: colorway.hex))
-                            .frame(width: 32, height: 32)
-                            .overlay(
-                                Circle()
-                                    .stroke(
-                                        isSelected ? Color.boutGold.opacity(0.9) : Color.boutBorderStrong,
-                                        lineWidth: isSelected ? 2 : 1
-                                    )
-                            )
-                            .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
-                            .scaleEffect(isSelected ? 1.12 : 1.0)
-                            .animation(.spring(response: 0.28), value: isSelected)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-        }
-    }
-
-    private var ctaRow: some View {
-        HStack(spacing: 10) {
-            Button(action: onViewDetails) {
-                HStack(spacing: 6) {
-                    Text("View")
-                        .font(.system(size: 10, weight: .light))
-                        .tracking(3)
-                    Image(systemName: "arrow.right")
-                        .font(.system(size: 10, weight: .light))
-                }
-                .foregroundStyle(BrandPalette.textPrimary)
-                .frame(maxWidth: .infinity)
-                .frame(height: 46)
-                .background(
-                    Capsule(style: .continuous)
-                        .fill(Color.boutGlassBottom)
-                        .overlay(
-                            Capsule(style: .continuous)
-                                .stroke(Color.boutBorder, lineWidth: 1)
-                        )
-                )
-            }
-            .buttonStyle(.plain)
-
-            Button(action: onAddToCart) {
-                HStack(spacing: 6) {
-                    Image(systemName: cartLoading ? "arrow.triangle.2.circlepath" : (addedToCart ? "checkmark" : "bag"))
-                        .font(.system(size: 14, weight: .light))
-
-                    Text(!product.isInStock ? "Out of Stock" : (cartLoading ? "Adding..." : (addedToCart ? "Added" : "Add to Bag")))
-                        .font(.system(size: 10, weight: .medium))
-                        .tracking(1.2)
-                }
-                .foregroundStyle(Color.boutCreamTop)
-                .frame(maxWidth: .infinity)
-                .frame(height: 46)
-                .background(
-                    Capsule(style: .continuous)
-                        .fill(addedToCart ? Color.boutButtonStart.opacity(0.86) : Color.boutButtonEnd)
-                        .overlay(
-                            Capsule(style: .continuous)
-                                .stroke(
-                                    Color.boutButtonStart.opacity(addedToCart ? 0.45 : 0.65),
-                                    lineWidth: 1
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.18)) {
+                                selectedColor = colorway
+                            }
+                            BrandHaptics.selection()
+                        } label: {
+                            Circle()
+                                .fill(Color(hex: colorway.hex))
+                                .frame(width: 36, height: 36)
+                                .overlay(
+                                    Circle()
+                                        .stroke(isSelected ? BrandPalette.goldDeep : BrandPalette.hairlineStrong, lineWidth: isSelected ? 2 : 1)
                                 )
-                        )
-                        .shadow(color: BrandPalette.gold.opacity(0.18), radius: 10, x: 0, y: 5)
-                )
+                                .padding(4)
+                                .background(
+                                    Circle()
+                                        .fill(BrandPalette.backgroundWarm)
+                                )
+                        }
+                        .buttonStyle(.plain)
+                        .frame(minWidth: 44, minHeight: 44)
+                    }
+                }
             }
-            .buttonStyle(.plain)
+        }
+    }
+
+    private var fullScreenActionRow: some View {
+        VStack(spacing: 10) {
+            Button(action: onPrimaryAction) {
+                HStack(spacing: 8) {
+                    Image(systemName: primaryActionIcon)
+                        .font(.system(size: 14, weight: .medium))
+                    Text(primaryActionTitle)
+                }
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(BrandCapsuleButtonStyle(tone: .gold, horizontalPadding: 18))
             .disabled(cartLoading || !product.isInStock)
+
+            Button(action: onViewDetails) {
+                HStack(spacing: 8) {
+                    Text("View Product")
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 12, weight: .medium))
+                }
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(BrandCapsuleButtonStyle(tone: .chrome, horizontalPadding: 18))
         }
     }
 
-    private var expandButton: some View {
-        Button {
-            withAnimation(.spring(response: 0.38, dampingFraction: 0.82)) {
-                detailsExpanded.toggle()
-            }
-            BrandHaptics.selection()
-        } label: {
-            HStack(spacing: 8) {
-                Text(detailsExpanded ? "Show Less" : "Show More")
-                    .font(.system(size: 11, weight: .medium))
-                    .tracking(1.8)
-
-                Spacer(minLength: 0)
-
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 11, weight: .medium))
-                    .rotationEffect(.degrees(detailsExpanded ? 180 : 0))
-                    .animation(.easeInOut(duration: 0.22), value: detailsExpanded)
-            }
-            .foregroundStyle(BrandPalette.textPrimary)
-            .padding(.horizontal, 14)
-            .frame(maxWidth: .infinity)
-            .frame(height: 46)
-            .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Color.boutGlassBottom)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .stroke(Color.boutBorder, lineWidth: 1)
-                    )
-            )
-            .contentShape(Rectangle())
+    private var compactActionIcon: String {
+        if primaryActionTitle == "Select Options" {
+            return "slider.horizontal.3"
         }
-        .buttonStyle(.plain)
-        .frame(maxWidth: .infinity, minHeight: 44)
+        return primaryActionIcon
     }
 
-    private func detailChip(icon: String, title: String, tint: Color = BrandPalette.gold) -> some View {
-        HStack(spacing: 6) {
-            Image(systemName: icon)
-                .font(.system(size: 10, weight: .medium))
-                .foregroundStyle(tint)
-
-            Text(title)
-                .font(.system(size: 10, weight: .light))
-                .foregroundStyle(BrandPalette.textSecondary)
-                .lineLimit(1)
+    private var primaryActionIcon: String {
+        if cartLoading {
+            return "arrow.triangle.2.circlepath"
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
-        .background(
-            Capsule(style: .continuous)
-                .fill(Color.boutGlassBottom)
-                .overlay(
-                    Capsule(style: .continuous)
-                        .stroke(Color.boutBorder, lineWidth: 0.5)
-                )
-        )
+        if addedToCart {
+            return "checkmark"
+        }
+        if product.isInStock == false {
+            return "xmark"
+        }
+        return "bag"
     }
 }
 
@@ -699,6 +529,7 @@ public struct ProductCardView: View {
         case fullscreen
     }
 
+    static let imageAspectRatio: CGFloat = 4.0 / 5.0
     static let excluded: Set<String> = Product.excludedNames
 
     @Environment(AurelienStore.self) private var store
@@ -721,7 +552,7 @@ public struct ProductCardView: View {
     }
 
     private var radius: CGFloat {
-        style == .fullscreen ? 22 : 18
+        style == .fullscreen ? 24 : 16
     }
 
     private var cleanImages: [String] {
@@ -731,6 +562,36 @@ public struct ProductCardView: View {
 
     private var badgeStyle: ProductBadgeStyle? {
         ProductBadgeStyle(product.badge)
+    }
+
+    private var requiresVariantSelection: Bool {
+        product.sizes.count > 1 || product.colors.count > 1
+    }
+
+    private var cardPrimaryActionTitle: String {
+        if !product.isInStock {
+            return "Out of Stock"
+        }
+        if cartLoading {
+            return "Adding..."
+        }
+        if addedToCart {
+            return "Added"
+        }
+        return requiresVariantSelection ? "Select Options" : "Add to Bag"
+    }
+
+    private var fullScreenPrimaryActionTitle: String {
+        if !product.isInStock {
+            return "Out of Stock"
+        }
+        if cartLoading {
+            return "Adding..."
+        }
+        if addedToCart {
+            return "Added"
+        }
+        return "Add to Bag"
     }
 
     public var body: some View {
@@ -766,343 +627,188 @@ public struct ProductCardView: View {
         switch style {
         case .list:
             listCard
-        case .grid, .fullscreen:
-            glassCard
+        case .grid:
+            gridCard
+        case .fullscreen:
+            fullScreenCard
         }
     }
 
     private var listCard: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .top, spacing: 16) {
-                ProductCardGalleryImage(name: cleanImages.first ?? product.heroImageName)
-                    .scaledToFill()
-                    .frame(width: 126, height: 176)
-                    .background(BrandPalette.surfaceRaised)
-                    .clipShape(RoundedRectangle(cornerRadius: BrandRadius.image, style: .continuous))
-                    .overlay(
-                        LinearGradient(
-                            colors: [.clear, .clear, BrandPalette.background.opacity(0.24)],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: BrandRadius.image, style: .continuous))
-                    )
-                    .overlay(listBadgeOverlay, alignment: .topLeading)
+        HStack(alignment: .top, spacing: 16) {
+            ProductCardMedia(
+                images: [cleanImages.first ?? product.heroImageName],
+                badgeStyle: badgeStyle,
+                inWishlist: inWishlist,
+                onWishlist: handleWishlist,
+                currentIndex: $currentImage
+            )
+            .frame(width: 126, height: 126 / Self.imageAspectRatio)
+            .clipShape(RoundedRectangle(cornerRadius: BrandRadius.image, style: .continuous))
 
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack(alignment: .top, spacing: 10) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(product.category.title.uppercased())
-                                .font(.caption2.weight(.semibold))
-                                .tracking(2.4)
-                                .foregroundStyle(BrandPalette.textSecondary)
+            VStack(alignment: .leading, spacing: 10) {
+                Text(product.category.title.uppercased())
+                    .font(BrandFont.mobileCaption2())
+                    .tracking(2.4)
+                    .foregroundStyle(BrandPalette.textSecondary)
 
-                            Text(product.name)
-                                .font(BrandFont.serif(18, relativeTo: .headline))
-                                .fontWeight(.semibold)
-                                .foregroundStyle(BrandPalette.textPrimary)
-                                .lineLimit(2)
-
-                            Text(product.summary)
-                                .font(.caption)
-                                .foregroundStyle(BrandPalette.textSecondary.opacity(0.85))
-                                .lineSpacing(3)
-                                .lineLimit(3)
-                        }
-
-                        Spacer(minLength: 0)
-
-                        listWishlistButton
-                    }
-
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
-                            listInfoChip(
-                                icon: product.ratingDisplayValue == nil ? "sparkles" : "star.fill",
-                                title: product.ratingDisplayValue ?? "New arrival",
-                                tint: product.ratingDisplayValue == nil ? BrandPalette.textPrimary : BrandPalette.gold
-                            )
-
-                            listInfoChip(
-                                icon: "shippingbox",
-                                title: product.delivery.isEmpty ? product.availabilityNote : product.delivery
-                            )
-
-                            if let primaryColor = product.colors.first {
-                                listInfoChip(
-                                    icon: "circle.fill",
-                                    title: product.colors.count > 1 ? "\(primaryColor.name) +\(product.colors.count - 1)" : primaryColor.name,
-                                    tint: Color(hex: primaryColor.hex)
-                                )
-                            }
-
-                            if !product.sizes.isEmpty {
-                                listInfoChip(
-                                    icon: "ruler",
-                                    title: product.sizes.count == 1 ? product.sizes[0] : "\(product.sizes.count) sizes"
-                                )
-                            }
-                        }
-                    }
-
-                    HStack(alignment: .bottom) {
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text("Price".uppercased())
-                                .font(.system(size: 9, weight: .medium))
-                                .tracking(1.6)
-                                .foregroundStyle(BrandPalette.textSecondary.opacity(0.7))
-
-                            Text(BrandFormatter.price(product.price))
-                                .font(BrandFont.serif(22, relativeTo: .headline))
-                                .foregroundStyle(BrandPalette.gold)
-                        }
-
-                        Spacer(minLength: 0)
-
-                        HStack(spacing: 6) {
-                            Circle()
-                                .fill(product.isInStock ? (product.isLowStock ? BrandPalette.rose : BrandPalette.sage) : Color.red.opacity(0.82))
-                                .frame(width: 7, height: 7)
-
-                            Text(product.stockLabel)
-                                .font(.caption2.weight(.medium))
-                                .foregroundStyle(BrandPalette.textSecondary)
-                        }
-                    }
-                }
-            }
-
-            HStack(spacing: 10) {
-                Button(action: { showDetails = true }) {
-                    HStack(spacing: 6) {
-                        Text("View Details")
-                        Image(systemName: "arrow.right")
-                    }
-                    .font(.caption.weight(.semibold))
+                Text(product.name)
+                    .font(BrandFont.serif(19, relativeTo: .headline))
                     .foregroundStyle(BrandPalette.textPrimary)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 44)
-                    .background(
-                        RoundedRectangle(cornerRadius: BrandRadius.soft, style: .continuous)
-                            .fill(BrandPalette.surfaceRaised)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: BrandRadius.soft, style: .continuous)
-                                    .stroke(BrandPalette.hairlineStrong, lineWidth: 0.5)
-                            )
-                    )
-                }
-                .buttonStyle(.plain)
+                    .lineLimit(2)
 
-                Button(action: handleQuickAddToCart) {
-                    HStack(spacing: 6) {
-                        Image(systemName: cartLoading ? "arrow.triangle.2.circlepath" : (addedToCart ? "checkmark" : "bag.badge.plus"))
-                        Text(!product.isInStock ? "Out of Stock" : (cartLoading ? "Adding..." : (addedToCart ? "Added" : "Add to Bag")))
+                Text(product.summary)
+                    .font(BrandFont.mobileCaption())
+                    .foregroundStyle(BrandPalette.textSecondary)
+                    .lineSpacing(3)
+                    .lineLimit(2)
+
+                HStack(alignment: .firstTextBaseline) {
+                    Text(BrandFormatter.price(product.price))
+                        .font(BrandFont.serif(22, relativeTo: .headline))
+                        .foregroundStyle(BrandPalette.goldDeep)
+
+                    Spacer(minLength: 12)
+
+                    statusLine
+                }
+
+                Button(action: handlePrimaryCardAction) {
+                    HStack(spacing: 8) {
+                        Image(systemName: compactPrimaryActionIcon)
+                            .font(.system(size: 13, weight: .medium))
+                        Text(cardPrimaryActionTitle)
                     }
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(BrandPalette.accentForeground)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 44)
-                    .background(
-                        RoundedRectangle(cornerRadius: BrandRadius.soft, style: .continuous)
-                            .fill(BrandPalette.goldGradient)
-                    )
                 }
-                .buttonStyle(.plain)
-                .disabled(cartLoading || !product.isInStock)
+                .buttonStyle(
+                    BrandCapsuleButtonStyle(
+                        tone: product.isInStock ? .gold : .chrome,
+                        horizontalPadding: 18
+                    )
+                )
+                .disabled(cartLoading || (!product.isInStock && cardPrimaryActionTitle == "Out of Stock"))
             }
         }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: BrandRadius.card, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [Color.boutGlassTop, Color.boutGlassBottom, BrandPalette.surfaceRaised],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: BrandRadius.card, style: .continuous)
-                .stroke(BrandPalette.hairlineStrong, lineWidth: 0.5)
-        )
-        .shadow(color: BrandPalette.shadowSoft, radius: 10, x: 0, y: 6)
+        .padding(16)
+        .background(cardSurface(cornerRadius: BrandRadius.card))
     }
 
-    private var glassCard: some View {
-        ZStack(alignment: .bottom) {
-            RoundedRectangle(cornerRadius: radius, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [Color.boutGlassTop, Color.boutGlassBottom, Color.boutCream.opacity(0.58)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .background(
-                    .ultraThinMaterial,
-                    in: RoundedRectangle(cornerRadius: radius, style: .continuous)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: radius, style: .continuous)
-                        .stroke(Color.boutBorderStrong, lineWidth: 1)
-                )
-
-            ZStack {
-                RadialGradient(
-                    colors: [Color.boutCreamTop.opacity(0.46), .clear],
-                    center: .topLeading,
-                    startRadius: 0,
-                    endRadius: 100
-                )
-                RadialGradient(
-                    colors: [BrandPalette.gold.opacity(0.10), .clear],
-                    center: .bottomTrailing,
-                    startRadius: 0,
-                    endRadius: 90
-                )
-            }
-            .allowsHitTesting(false)
-
-            if style == .fullscreen {
-                fullScreenLayout
-            } else {
-                gridLayout
-            }
-
-            Rectangle()
-                .fill(
-                    LinearGradient(
-                        colors: [.clear, BrandPalette.gold.opacity(0.45), .clear],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-                .frame(height: 1)
-                .allowsHitTesting(false)
-        }
-        .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
-        .shadow(
-            color: BrandPalette.shadowMedium,
-            radius: style == .fullscreen ? 24 : 14,
-            x: 0,
-            y: style == .fullscreen ? 16 : 8
-        )
-    }
-
-    private var gridLayout: some View {
+    private var gridCard: some View {
         VStack(spacing: 0) {
-            ProductCardCarousel(
+            ProductCardMedia(
                 images: cleanImages,
                 badgeStyle: badgeStyle,
                 inWishlist: inWishlist,
                 onWishlist: handleWishlist,
                 currentIndex: $currentImage
             )
-            .aspectRatio(4 / 5, contentMode: .fit)
+            .aspectRatio(Self.imageAspectRatio, contentMode: .fit)
 
             ProductCardDetailsPanel(
                 product: product,
                 style: .grid,
                 compact: compact,
+                primaryActionTitle: cardPrimaryActionTitle,
                 selectedSize: $selectedSize,
                 selectedColor: $selectedColor,
                 addedToCart: $addedToCart,
                 cartLoading: $cartLoading,
                 feedbackError: $feedbackError,
-                detailsExpanded: $detailsExpanded,
-                onAddToCart: handleConfiguredAddToCart,
+                onPrimaryAction: handlePrimaryCardAction,
                 onViewDetails: { showDetails = true }
             )
         }
+        .background(cardSurface(cornerRadius: radius))
+        .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
     }
 
-    private var fullScreenLayout: some View {
-        ZStack(alignment: .bottom) {
-            ProductCardCarousel(
+    private var fullScreenCard: some View {
+        VStack(spacing: 0) {
+            ProductCardMedia(
                 images: cleanImages,
                 badgeStyle: badgeStyle,
                 inWishlist: inWishlist,
                 onWishlist: handleWishlist,
                 currentIndex: $currentImage
             )
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .aspectRatio(Self.imageAspectRatio, contentMode: .fit)
 
             ProductCardDetailsPanel(
                 product: product,
                 style: .fullscreen,
                 compact: false,
+                primaryActionTitle: fullScreenPrimaryActionTitle,
                 selectedSize: $selectedSize,
                 selectedColor: $selectedColor,
                 addedToCart: $addedToCart,
                 cartLoading: $cartLoading,
                 feedbackError: $feedbackError,
-                detailsExpanded: $detailsExpanded,
-                onAddToCart: handleConfiguredAddToCart,
+                onPrimaryAction: handleConfiguredAddToCart,
                 onViewDetails: { showDetails = true }
             )
         }
+        .background(BrandPalette.backgroundWarm)
+        .overlay(
+            RoundedRectangle(cornerRadius: radius, style: .continuous)
+                .stroke(BrandPalette.hairlineStrong, lineWidth: 0.5)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
+        .shadow(color: BrandPalette.shadowMedium, radius: 16, x: 0, y: 8)
     }
 
-    private var listWishlistButton: some View {
-        Button(action: handleWishlist) {
-            Image(systemName: inWishlist ? "heart.fill" : "heart")
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(inWishlist ? BrandPalette.gold : BrandPalette.textSecondary)
-                .frame(width: 40, height: 40)
-                .background(
-                    Circle()
-                        .fill(BrandPalette.overlay.opacity(0.72))
-                        .background(.ultraThinMaterial, in: Circle())
-                )
-                .overlay(
-                    Circle()
-                        .stroke(inWishlist ? BrandPalette.goldBorder : BrandPalette.hairlineStrong, lineWidth: 0.5)
-                )
-        }
-        .buttonStyle(.plain)
-    }
+    private var statusLine: some View {
+        HStack(spacing: 6) {
+            Circle()
+                .fill(product.isInStock ? (product.isLowStock ? BrandPalette.rose : BrandPalette.sage) : BrandPalette.error)
+                .frame(width: 7, height: 7)
 
-    private func listInfoChip(icon: String, title: String, tint: Color = BrandPalette.gold) -> some View {
-        HStack(spacing: 5) {
-            Image(systemName: icon)
-                .font(.caption2.weight(.semibold))
-                .foregroundStyle(tint)
-
-            Text(title)
-                .font(.caption2)
-                .foregroundStyle(BrandPalette.textSecondary)
+            Text(product.stockLabel)
+                .font(BrandFont.mobileCaption2())
+                .foregroundStyle(product.isInStock ? BrandPalette.textSecondary : BrandPalette.error)
                 .lineLimit(1)
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 7)
-        .background(
-            Capsule(style: .continuous)
-                .fill(BrandPalette.surfaceRaised)
-                .overlay(
-                    Capsule(style: .continuous)
-                        .stroke(BrandPalette.hairlineStrong, lineWidth: 0.5)
-                )
-        )
     }
 
-    @ViewBuilder
-    private var listBadgeOverlay: some View {
-        if let badgeStyle {
-            Text(badgeStyle.label.uppercased())
-                .font(.caption2.weight(.semibold))
-                .foregroundStyle(badgeStyle.foreground)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(badgeStyle.background, in: Capsule(style: .continuous))
-                .padding(10)
+    private var compactPrimaryActionIcon: String {
+        if cardPrimaryActionTitle == "Select Options" {
+            return "slider.horizontal.3"
         }
+        if cartLoading {
+            return "arrow.triangle.2.circlepath"
+        }
+        if addedToCart {
+            return "checkmark"
+        }
+        if product.isInStock == false {
+            return "xmark"
+        }
+        return "bag"
+    }
+
+    private func cardSurface(cornerRadius: CGFloat) -> some View {
+        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+            .fill(BrandPalette.surfaceRaised)
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .stroke(BrandPalette.hairlineStrong, lineWidth: 0.5)
+            )
+            .shadow(color: BrandPalette.shadowSoft, radius: 10, x: 0, y: 6)
     }
 
     private func handleWishlist() {
         guard product.isValid else { return }
         store.toggleWishlist(for: product)
+    }
+
+    private func handlePrimaryCardAction() {
+        if requiresVariantSelection {
+            showDetails = true
+            BrandHaptics.selection()
+            return
+        }
+
+        handleQuickAddToCart()
     }
 
     private func handleQuickAddToCart() {
@@ -1137,7 +843,11 @@ public struct ProductCardView: View {
             } catch {
                 await MainActor.run {
                     cartLoading = false
-                    showError((error as? APIError)?.errorDescription ?? error.localizedDescription)
+                    if let apiError = error as? APIError, case .unauthorized = apiError {
+                        store.present(.auth)
+                    } else {
+                        showError((error as? APIError)?.errorDescription ?? error.localizedDescription)
+                    }
                 }
             }
         }
@@ -1172,7 +882,6 @@ public struct ProductCardView: View {
 
                 await MainActor.run {
                     cartLoading = false
-
                     withAnimation(.spring(response: 0.3)) {
                         addedToCart = true
                     }
@@ -1187,7 +896,11 @@ public struct ProductCardView: View {
             } catch {
                 await MainActor.run {
                     cartLoading = false
-                    showError((error as? APIError)?.errorDescription ?? error.localizedDescription)
+                    if let apiError = error as? APIError, case .unauthorized = apiError {
+                        store.present(.auth)
+                    } else {
+                        showError((error as? APIError)?.errorDescription ?? error.localizedDescription)
+                    }
                 }
             }
         }

@@ -1,12 +1,16 @@
 import { NextResponse } from 'next/server'
+import { databaseHealthSummary } from '../../lib/backend'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
+  const database = await databaseHealthSummary()
+
   return NextResponse.json({
     ok: true,
     service: 'BOUTIQUE API',
-    storage: process.env.AURELIEN_MONGODB_URI?.trim() ? 'mongodb' : 'local-json',
+    storage: database.storage,
+    database,
     endpoints: {
       products: '/api/products',
       uploads: '/api/uploads/product-image',

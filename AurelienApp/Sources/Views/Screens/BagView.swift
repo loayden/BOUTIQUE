@@ -157,11 +157,7 @@ struct BagView: View {
     }
 
     private func openCheckout() {
-        if store.isAuthenticated {
-            store.present(.checkout)
-        } else {
-            store.present(.auth)
-        }
+        store.present(.checkout)
     }
 }
 

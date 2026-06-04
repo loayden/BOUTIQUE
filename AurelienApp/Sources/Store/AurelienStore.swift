@@ -1,6 +1,5 @@
 import Foundation
 import Observation
-import Security
 import SwiftUI
 
 @MainActor
@@ -11,6 +10,7 @@ final class AurelienStore {
     @ObservationIgnored private let decoder = JSONDecoder()
     @ObservationIgnored private var lastRoutePushAt = Date.distantPast
     @ObservationIgnored private var authInvalidationObserver: NSObjectProtocol?
+    @ObservationIgnored private var wishlistOperationProductIDs = Set<String>()
 
     var products: [Product] {
         didSet {
@@ -200,545 +200,21 @@ final class AurelienStore {
         var id: String { rawValue }
     }
 
-    #if DEBUG
-    static var previewCatalogProducts: [Product] {
-        [
-            Product(
-                id: "p-jc-003",
-                name: "Wool-Blend Trench Coat",
-                category: .jackets,
-                price: 1500,
-                summary: "A modern trench with a tailored shoulder.",
-                story: "A modern trench with a tailored shoulder.",
-                imageNames: ["/uploads/whitejacket.jpg", "/uploads/peig_leather_jacket.jpg"],
-                sizes: ["M", "L", "XL"],
-                colors: colorways(["cream"]),
-                composition: "Details from in-store inventory.",
-                care: "Follow care guidance provided at delivery.",
-                delivery: "Delivery across Egypt.",
-                returns: "Returns available within policy window.",
-                badge: .editorialPick,
-                featured: true
-            ),
-            Product(
-                id: "p-jc-007",
-                name: "Navy Embroidered Bomber",
-                category: .jackets,
-                price: 1000,
-                summary: "Navy Embroidered Bomber",
-                story: "Navy Embroidered Bomber",
-                imageNames: ["/uploads/italian_jacket3.jpg", "/uploads/italian_jacket.jpg", "/uploads/italian_jacket2.jpg"],
-                sizes: ["M", "L", "XL"],
-                colors: colorways(["camel", "navy"]),
-                composition: "Details from in-store inventory.",
-                care: "Follow care guidance provided at delivery.",
-                delivery: "Delivery across Egypt.",
-                returns: "Returns available within policy window.",
-                badge: .bestselling,
-                featured: true
-            ),
-            Product(
-                id: "p-jc-011",
-                name: "Urban Brown Leather Jacket",
-                category: .jackets,
-                price: 1500,
-                summary: "Urban Brown Leather Jacket",
-                story: "Urban Brown Leather Jacket",
-                imageNames: ["/uploads/brownleather2.jpg", "/uploads/brown_wind_jacket.jpg"],
-                sizes: ["M", "L", "XL"],
-                colors: colorways(["brown"]),
-                composition: "Details from in-store inventory.",
-                care: "Follow care guidance provided at delivery.",
-                delivery: "Delivery across Egypt.",
-                returns: "Returns available within policy window.",
-                badge: .newArrival,
-                featured: true
-            ),
-            Product(
-                id: "p-jc-012",
-                name: "Dark Urban Bomber Jacket",
-                category: .jackets,
-                price: 1500,
-                summary: "Dark Urban Bomber Jacket",
-                story: "Dark Urban Bomber Jacket",
-                imageNames: ["/uploads/black.jpg", "/uploads/black_wind_jacket.jpg"],
-                sizes: ["M", "L", "XL"],
-                colors: colorways(["black"]),
-                composition: "Details from in-store inventory.",
-                care: "Follow care guidance provided at delivery.",
-                delivery: "Delivery across Egypt.",
-                returns: "Returns available within policy window.",
-                badge: nil,
-                featured: false
-            ),
-            Product(
-                id: "p-jc-014",
-                name: "Gray Urban Bomber Jacket",
-                category: .jackets,
-                price: 1500,
-                summary: "Gray Urban Bomber Jacket",
-                story: "Gray Urban Bomber Jacket",
-                imageNames: ["/uploads/greyjacket.jpg", "/uploads/greyjacket2.jpg"],
-                sizes: ["M", "L", "XL"],
-                colors: colorways(["gray"]),
-                composition: "Details from in-store inventory.",
-                care: "Follow care guidance provided at delivery.",
-                delivery: "Delivery across Egypt.",
-                returns: "Returns available within policy window.",
-                badge: nil,
-                featured: false
-            ),
-            Product(
-                id: "p-jc-016",
-                name: "Cream Geometric Quilted Shacket",
-                category: .jackets,
-                price: 1470,
-                summary: "Cream quilted shacket with a geometric matelasse pattern.",
-                story: "Cream quilted shacket with a geometric matelasse pattern.",
-                imageNames: ["/uploads/Cream Geometric Quilted Shacket.jpg"],
-                sizes: ["M", "L", "XL", "2XL"],
-                colors: colorways(["cream", "gray"]),
-                composition: "Details from in-store inventory.",
-                care: "Follow care guidance provided at delivery.",
-                delivery: "Delivery across Egypt.",
-                returns: "Returns available within policy window.",
-                badge: .editorialPick,
-                featured: true
-            ),
-            Product(
-                id: "p-jc-017",
-                name: "Cream Zip-Up Harrington Jacket",
-                category: .jackets,
-                price: 1470,
-                summary: "Minimal cream harrington jacket with a clean zip-front profile.",
-                story: "Minimal cream harrington jacket with a clean zip-front profile.",
-                imageNames: ["/uploads/Cream Zip-Up Harrington Jacket.jpg"],
-                sizes: ["M", "L", "XL", "2XL"],
-                colors: colorways(["cream"]),
-                composition: "Details from in-store inventory.",
-                care: "Follow care guidance provided at delivery.",
-                delivery: "Delivery across Egypt.",
-                returns: "Returns available within policy window.",
-                badge: .newArrival,
-                featured: true
-            ),
-            Product(
-                id: "p-jc-018",
-                name: "Textured Waffle-Knit Zip Jacket",
-                category: .jackets,
-                price: 1200,
-                summary: "Lightweight zip jacket in a cream waffle-knit texture.",
-                story: "Lightweight zip jacket in a cream waffle-knit texture.",
-                imageNames: ["/uploads/Textured Waffle-Knit Zip Jacket.jpg"],
-                sizes: ["M", "L", "XL", "2XL"],
-                colors: colorways(["cream"]),
-                composition: "Details from in-store inventory.",
-                care: "Follow care guidance provided at delivery.",
-                delivery: "Delivery across Egypt.",
-                returns: "Returns available within policy window.",
-                badge: nil,
-                featured: false
-            ),
-            Product(
-                id: "p-su-001",
-                name: "Minimal Cream Street Set",
-                category: .suits,
-                price: 2149,
-                summary: "Minimal Cream Street Set",
-                story: "Minimal Cream Street Set",
-                imageNames: ["/uploads/whitesuit.jpg", "/uploads/peig_suit2.jpg"],
-                sizes: ["38", "40", "42", "44"],
-                colors: colorways(["cream"]),
-                composition: "Details from in-store inventory.",
-                care: "Follow care guidance provided at delivery.",
-                delivery: "Delivery across Egypt.",
-                returns: "Returns available within policy window.",
-                badge: .editorialPick,
-                featured: true
-            ),
-            Product(
-                id: "p-su-003",
-                name: "Mocha Casual Street Set",
-                category: .suits,
-                price: 2149,
-                summary: "Mocha Casual Street Set",
-                story: "Mocha Casual Street Set",
-                imageNames: ["/uploads/brownsuit.jpg", "/uploads/brown_suit.jpg"],
-                sizes: ["38", "40", "42"],
-                colors: colorways(["mocha"]),
-                composition: "Details from in-store inventory.",
-                care: "Follow care guidance provided at delivery.",
-                delivery: "Delivery across Egypt.",
-                returns: "Returns available within policy window.",
-                badge: nil,
-                featured: false
-            ),
-            Product(
-                id: "p-sh-003",
-                name: "Black & White Striped Polo Sweater",
-                category: .shirts,
-                price: 1080,
-                summary: "Striped rib-knit polo sweater in black and white.",
-                story: "Striped rib-knit polo sweater in black and white.",
-                imageNames: ["/uploads/Black & White Striped Polo Sweater.jpg"],
-                sizes: ["M", "L", "XL", "2XL"],
-                colors: colorways(["black", "white"]),
-                composition: "Details from in-store inventory.",
-                care: "Follow care guidance provided at delivery.",
-                delivery: "Delivery across Egypt.",
-                returns: "Returns available within policy window.",
-                badge: .newArrival,
-                featured: true
-            ),
-            Product(
-                id: "p-sh-004",
-                name: "Cream Polo Collar Sweatshirt",
-                category: .shirts,
-                price: 1470,
-                summary: "Relaxed cream sweatshirt finished with a polo collar.",
-                story: "Relaxed cream sweatshirt finished with a polo collar.",
-                imageNames: ["/uploads/Cream Polo Collar Sweatshirt.jpg"],
-                sizes: ["M", "L", "XL", "2XL"],
-                colors: colorways(["cream"]),
-                composition: "Details from in-store inventory.",
-                care: "Follow care guidance provided at delivery.",
-                delivery: "Delivery across Egypt.",
-                returns: "Returns available within policy window.",
-                badge: .editorialPick,
-                featured: true
-            ),
-            Product(
-                id: "p-sh-005",
-                name: "Poker Face Tan Ribbed Polo",
-                category: .shirts,
-                price: 680,
-                summary: "Tan ribbed polo with a clean open-collar neckline.",
-                story: "Tan ribbed polo with a clean open-collar neckline.",
-                imageNames: ["/uploads/Poker Face Tan Ribbed Polo.jpg"],
-                sizes: ["M", "L", "XL", "2XL"],
-                colors: colorways(["tan"]),
-                composition: "Details from in-store inventory.",
-                care: "Follow care guidance provided at delivery.",
-                delivery: "Delivery across Egypt.",
-                returns: "Returns available within policy window.",
-                badge: nil,
-                featured: false
-            ),
-            Product(
-                id: "p-kn-001",
-                name: "Dark Charcoal Chenille Turtleneck",
-                category: .knitwear,
-                price: 870,
-                summary: "Soft chenille turtleneck in a dark charcoal tone.",
-                story: "Soft chenille turtleneck in a dark charcoal tone.",
-                imageNames: ["/uploads/Dark Charcoal Chenille Turtleneck.jpg"],
-                sizes: ["M", "L", "XL", "2XL"],
-                colors: colorways(["charcoal"]),
-                composition: "Details from in-store inventory.",
-                care: "Follow care guidance provided at delivery.",
-                delivery: "Delivery across Egypt.",
-                returns: "Returns available within policy window.",
-                badge: .newArrival,
-                featured: true
-            ),
-            Product(
-                id: "p-kn-002",
-                name: "Balenciaga Gradient Logo Sweater",
-                category: .knitwear,
-                price: 1200,
-                summary: "Brown-to-camel gradient sweater with tonal Balenciaga branding.",
-                story: "Brown-to-camel gradient sweater with tonal Balenciaga branding.",
-                imageNames: ["/uploads/Balenciaga Gradient Logo Sweater.jpg"],
-                sizes: ["M", "L", "XL", "2XL"],
-                colors: colorways(["brown", "camel"]),
-                composition: "Details from in-store inventory.",
-                care: "Follow care guidance provided at delivery.",
-                delivery: "Delivery across Egypt.",
-                returns: "Returns available within policy window.",
-                badge: .editorialPick,
-                featured: true
-            ),
-            Product(
-                id: "p-kn-003",
-                name: "Beige Essential Rib-Knit Sweater",
-                category: .knitwear,
-                price: 870,
-                summary: "Beige rib-knit sweater with contrast tipped trim.",
-                story: "Beige rib-knit sweater with contrast tipped trim.",
-                imageNames: ["/uploads/Beige Essential Rib-Knit Sweater.jpg"],
-                sizes: ["M"],
-                colors: colorways(["beige", "white"]),
-                composition: "Details from in-store inventory.",
-                care: "Follow care guidance provided at delivery.",
-                delivery: "Delivery across Egypt.",
-                returns: "Returns available within policy window.",
-                badge: nil,
-                featured: false
-            ),
-            Product(
-                id: "p-kn-004",
-                name: "Charcoal Quarter-Zip Pullover",
-                category: .knitwear,
-                price: 870,
-                summary: "Charcoal pullover with a clean quarter-zip neckline.",
-                story: "Charcoal pullover with a clean quarter-zip neckline.",
-                imageNames: ["/uploads/Charcoal Quarter-Zip Pullover.jpg"],
-                sizes: ["M", "L", "XL", "2XL"],
-                colors: colorways(["charcoal"]),
-                composition: "Details from in-store inventory.",
-                care: "Follow care guidance provided at delivery.",
-                delivery: "Delivery across Egypt.",
-                returns: "Returns available within policy window.",
-                badge: nil,
-                featured: false
-            ),
-            Product(
-                id: "p-kn-005",
-                name: "Essential Turtleneck Sweater (Ivory)",
-                category: .knitwear,
-                price: 680,
-                summary: "Essential ivory turtleneck sweater with a clean minimalist finish.",
-                story: "Essential ivory turtleneck sweater with a clean minimalist finish.",
-                imageNames: ["/uploads/Essential Turtleneck Sweater (Ivory).jpg"],
-                sizes: ["M", "L", "XL", "2XL"],
-                colors: colorways(["cream"]),
-                composition: "Details from in-store inventory.",
-                care: "Follow care guidance provided at delivery.",
-                delivery: "Delivery across Egypt.",
-                returns: "Returns available within policy window.",
-                badge: .bestselling,
-                featured: true
-            ),
-            Product(
-                id: "p-kn-006",
-                name: "Tommy Hilfiger Striped Hoodie (Tan:Brown)",
-                category: .knitwear,
-                price: 870,
-                summary: "Striped knit hoodie in tan, brown, and white.",
-                story: "Striped knit hoodie in tan, brown, and white.",
-                imageNames: ["/uploads/Tommy Hilfiger Striped Hoodie (Tan:Brown).jpg"],
-                sizes: ["M", "L", "XL", "2XL"],
-                colors: colorways(["tan", "brown", "white"]),
-                composition: "Details from in-store inventory.",
-                care: "Follow care guidance provided at delivery.",
-                delivery: "Delivery across Egypt.",
-                returns: "Returns available within policy window.",
-                badge: nil,
-                featured: false
-            ),
-            Product(
-                id: "p-denim-001",
-                name: "Classic Blue Denim Jeans (Pull & Bear)",
-                category: .denim,
-                price: 1155,
-                summary: "Classic blue denim jeans in a relaxed straight fit.",
-                story: "Classic blue denim jeans in a relaxed straight fit.",
-                imageNames: ["/uploads/Classic Blue Denim Jeans (Pull & Bear).jpg"],
-                sizes: ["30", "32", "34", "36", "38"],
-                colors: colorways(["blue"]),
-                composition: "Details from in-store inventory.",
-                care: "Follow care guidance provided at delivery.",
-                delivery: "Delivery across Egypt.",
-                returns: "Returns available within policy window.",
-                badge: .bestselling,
-                featured: true
-            ),
-            Product(
-                id: "p-denim-002",
-                name: "Dark Indigo Denim Jeans",
-                category: .denim,
-                price: 1155,
-                summary: "Dark indigo denim jeans with a clean tapered line.",
-                story: "Dark indigo denim jeans with a clean tapered line.",
-                imageNames: ["/uploads/Dark Indigo Denim Jeans.jpg"],
-                sizes: ["30", "32", "34", "36", "38"],
-                colors: colorways(["indigo"]),
-                composition: "Details from in-store inventory.",
-                care: "Follow care guidance provided at delivery.",
-                delivery: "Delivery across Egypt.",
-                returns: "Returns available within policy window.",
-                badge: nil,
-                featured: false
-            ),
-            Product(
-                id: "p-denim-003",
-                name: "Levi's Classic Blue Jeans",
-                category: .denim,
-                price: 1155,
-                summary: "Classic blue Levi's jeans for everyday wear.",
-                story: "Classic blue Levi's jeans for everyday wear.",
-                imageNames: ["/uploads/Levi's Classic Blue Jeans.jpg"],
-                sizes: ["30", "32", "34", "36", "38"],
-                colors: colorways(["blue"]),
-                composition: "Details from in-store inventory.",
-                care: "Follow care guidance provided at delivery.",
-                delivery: "Delivery across Egypt.",
-                returns: "Returns available within policy window.",
-                badge: .bestselling,
-                featured: true
-            ),
-            Product(
-                id: "p-denim-004",
-                name: "Light Wash Vintage Denim (Pull & Bear)",
-                category: .denim,
-                price: 1155,
-                summary: "Light wash vintage denim with a relaxed cropped fit.",
-                story: "Light wash vintage denim with a relaxed cropped fit.",
-                imageNames: ["/uploads/Light Wash Vintage Denim (Pull & Bear).jpg"],
-                sizes: ["30", "32", "34", "36", "38"],
-                colors: colorways(["blue"]),
-                composition: "Details from in-store inventory.",
-                care: "Follow care guidance provided at delivery.",
-                delivery: "Delivery across Egypt.",
-                returns: "Returns available within policy window.",
-                badge: nil,
-                featured: false
-            ),
-            Product(
-                id: "p-denim-005",
-                name: "Medium Wash Levi's Cropped Jeans",
-                category: .denim,
-                price: 700,
-                summary: "Medium wash cropped Levi's jeans with a classic five-pocket shape.",
-                story: "Medium wash cropped Levi's jeans with a classic five-pocket shape.",
-                imageNames: ["/uploads/Medium Wash Levi's Cropped Jeans.jpg"],
-                sizes: ["30", "32", "34", "36", "38"],
-                colors: colorways(["blue"]),
-                composition: "Details from in-store inventory.",
-                care: "Follow care guidance provided at delivery.",
-                delivery: "Delivery across Egypt.",
-                returns: "Returns available within policy window.",
-                badge: nil,
-                featured: false
-            ),
-            Product(
-                id: "p-korean-001",
-                name: "Camo Wool Trousers (Gray)",
-                category: .korean,
-                price: 1200,
-                summary: "Gray wool trousers with a cropped modern silhouette.",
-                story: "Gray wool trousers with a cropped modern silhouette.",
-                imageNames: ["/uploads/Camo Wool Trousers (Gray).jpg"],
-                sizes: ["M", "L", "XL", "2XL"],
-                colors: colorways(["gray"]),
-                composition: "Details from in-store inventory.",
-                care: "Follow care guidance provided at delivery.",
-                delivery: "Delivery across Egypt.",
-                returns: "Returns available within policy window.",
-                badge: .newArrival,
-                featured: true
-            ),
-            Product(
-                id: "p-korean-002",
-                name: "Black Elastic-Waist Trousers",
-                category: .korean,
-                price: 1080,
-                summary: "Relaxed black trousers with an elasticated back waist.",
-                story: "Relaxed black trousers with an elasticated back waist.",
-                imageNames: ["/uploads/Black Elastic-Waist Trousers.jpg"],
-                sizes: ["M", "L", "XL", "2XL"],
-                colors: colorways(["black"]),
-                composition: "Details from in-store inventory.",
-                care: "Follow care guidance provided at delivery.",
-                delivery: "Delivery across Egypt.",
-                returns: "Returns available within policy window.",
-                badge: nil,
-                featured: false
-            ),
-            Product(
-                id: "p-korean-003",
-                name: "Diesel Elastic-Back Chino (Cream)",
-                category: .korean,
-                price: 1100,
-                summary: "Cream chino with a structured straight leg and elastic-back waist.",
-                story: "Cream chino with a structured straight leg and elastic-back waist.",
-                imageNames: ["/uploads/Diesel Elastic-Back Chino (Cream).jpg"],
-                sizes: ["M", "L", "XL", "2XL"],
-                colors: colorways(["cream"]),
-                composition: "Details from in-store inventory.",
-                care: "Follow care guidance provided at delivery.",
-                delivery: "Delivery across Egypt.",
-                returns: "Returns available within policy window.",
-                badge: .editorialPick,
-                featured: true
-            ),
-            Product(
-                id: "p-korean-004",
-                name: "Diesel Stretch Chino (Beige)",
-                category: .korean,
-                price: 1100,
-                summary: "Beige stretch chino with a tapered easy-wear fit.",
-                story: "Beige stretch chino with a tapered easy-wear fit.",
-                imageNames: ["/uploads/Diesel Stretch Chino (Beige).jpg"],
-                sizes: ["M", "L", "XL", "2XL"],
-                colors: colorways(["beige"]),
-                composition: "Details from in-store inventory.",
-                care: "Follow care guidance provided at delivery.",
-                delivery: "Delivery across Egypt.",
-                returns: "Returns available within policy window.",
-                badge: nil,
-                featured: false
-            ),
-            Product(
-                id: "p-baggy-001",
-                name: "Black Tapered Cargo Pants",
-                category: .jeans,
-                price: 1200,
-                summary: "Tapered black cargo pants with adjustable hems.",
-                story: "Tapered black cargo pants with adjustable hems.",
-                imageNames: ["/uploads/Black Tapered Cargo Pants.jpg"],
-                sizes: ["M", "L", "XL", "2XL"],
-                colors: colorways(["black"]),
-                composition: "Details from in-store inventory.",
-                care: "Follow care guidance provided at delivery.",
-                delivery: "Delivery across Egypt.",
-                returns: "Returns available within policy window.",
-                badge: .bestselling,
-                featured: true
-            ),
-            Product(
-                id: "p-baggy-002",
-                name: "Ribbed Cargo Knit Pant (Cream)",
-                category: .jeans,
-                price: 1200,
-                summary: "Cream ribbed knit pants with oversized cargo pockets.",
-                story: "Cream ribbed knit pants with oversized cargo pockets.",
-                imageNames: ["/uploads/Ribbed Cargo Knit Pant (Cream).jpg"],
-                sizes: ["M"],
-                colors: colorways(["cream"]),
-                composition: "Details from in-store inventory.",
-                care: "Follow care guidance provided at delivery.",
-                delivery: "Delivery across Egypt.",
-                returns: "Returns available within policy window.",
-                badge: nil,
-                featured: false
-            ),
-            Product(
-                id: "p-baggy-003",
-                name: "Medium Wash Cargo Denim Jeans",
-                category: .jeans,
-                price: 1155,
-                summary: "Medium wash denim jeans with utility cargo paneling.",
-                story: "Medium wash denim jeans with utility cargo paneling.",
-                imageNames: ["/uploads/Medium Wash Cargo Denim Jeans.jpg"],
-                sizes: ["30", "32", "34", "36", "38"],
-                colors: colorways(["blue"]),
-                composition: "Details from in-store inventory.",
-                care: "Follow care guidance provided at delivery.",
-                delivery: "Delivery across Egypt.",
-                returns: "Returns available within policy window.",
-                badge: .newArrival,
-                featured: true
-            )
-        ]
-    }
-    #endif
-
-    init() {
+    init(startBackgroundTasks: Bool = true, restorePersistedSession: Bool = true) {
         Self.bootstrapSensitiveStorageIfNeeded()
-        let loadedToken = KeychainStore.value(for: StorageKey.authToken) ?? Self.loadValue(String.self, key: StorageKey.authToken)
-        let loadedUser = Self.loadValue(User.self, key: StorageKey.currentUser)
-            ?? Self.restoreUserFromToken(loadedToken)
+        let loadedToken = restorePersistedSession
+            ? (AuthTokenStore.value(for: AuthTokenStore.serviceKey) ?? Self.loadValue(String.self, key: StorageKey.authToken))
+            : nil
+        let persistedUser = restorePersistedSession
+            ? Self.loadValue(User.self, key: StorageKey.currentUser)
+            : nil
+        let loadedUser = Self.restoreUserFromToken(loadedToken)
+            ?? {
+                guard let loadedToken, loadedToken.isEmpty == false else {
+                    return nil
+                }
+                return persistedUser
+            }()
         currentUser = loadedUser
         authToken = loadedToken
         let userScoped = loadedUser?.id
@@ -767,9 +243,11 @@ final class AurelienStore {
         selectedSort = Self.loadValue(SortOption.self, key: Self.storageKey(StorageKey.selectedSort, userId: userScoped)) ?? .featured
         if let loadedUser {
             Self.saveValue(loadedUser, key: StorageKey.currentUser)
+        } else if persistedUser != nil {
+            UserDefaults.standard.removeObject(forKey: StorageKey.currentUser)
         }
         if let loadedToken, !loadedToken.isEmpty {
-            KeychainStore.save(loadedToken, for: StorageKey.authToken)
+            AuthTokenStore.save(loadedToken, for: AuthTokenStore.serviceKey)
             UserDefaults.standard.removeObject(forKey: StorageKey.authToken)
         }
         authInvalidationObserver = NotificationCenter.default.addObserver(
@@ -791,9 +269,11 @@ final class AurelienStore {
         }
         restoreNavigationState()
 
-        Task {
-            await refreshCatalogFromBackend()
-            await hydrateAuthenticatedSession()
+        if startBackgroundTasks {
+            Task {
+                await refreshCatalogFromBackend()
+                await hydrateAuthenticatedSession()
+            }
         }
     }
 
@@ -979,20 +459,78 @@ final class AurelienStore {
     }
 
     func toggleWishlist(for product: Product) {
-        if wishlist.contains(product.id) {
-            wishlist.remove(product.id)
-        } else {
-            wishlist.insert(product.id)
+        guard !product.isExcluded else { return }
+
+        guard let userId = currentUser?.id else {
+            present(.auth)
             sendSmartNotification(
-                kind: .recommendation,
-                title: "\(product.name) saved to your list",
-                message: "We will use this preference to refine your outfit feed and stylist suggestions.",
-                emphasis: "Preference updated",
-                actionTitle: "Open Wishlist",
-                destination: .wishlist
+                kind: .support,
+                title: "Sign in to save pieces",
+                message: "Saved products are tied to your account so they stay available across devices and future sessions.",
+                emphasis: "Account required",
+                actionTitle: "Sign In",
+                destination: nil
             )
+            return
         }
-        BrandHaptics.selection()
+
+        guard wishlistOperationProductIDs.contains(product.id) == false else {
+            return
+        }
+
+        let shouldSave = wishlist.contains(product.id) == false
+        if shouldSave {
+            wishlist.insert(product.id)
+        } else {
+            wishlist.remove(product.id)
+        }
+        wishlistOperationProductIDs.insert(product.id)
+
+        Task {
+            defer { wishlistOperationProductIDs.remove(product.id) }
+
+            do {
+                let remoteProducts = shouldSave
+                    ? try await APIService.shared.saveProduct(productId: product.id, userId: userId)
+                    : try await APIService.shared.removeSavedProduct(productId: product.id, userId: userId)
+                applyRemoteWishlist(remoteProducts)
+
+                if shouldSave {
+                    sendSmartNotification(
+                        kind: .recommendation,
+                        title: "\(product.name) saved to your list",
+                        message: "We will use this preference to refine your outfit feed and stylist suggestions.",
+                        emphasis: "Preference updated",
+                        actionTitle: "Open Wishlist",
+                        destination: .wishlist
+                    )
+                }
+
+                BrandHaptics.selection()
+            } catch APIError.unauthorized {
+                if shouldSave {
+                    wishlist.remove(product.id)
+                } else {
+                    wishlist.insert(product.id)
+                }
+                present(.auth)
+            } catch {
+                if shouldSave {
+                    wishlist.remove(product.id)
+                } else {
+                    wishlist.insert(product.id)
+                }
+                Logger.error("Failed to sync wishlist change: \(error.localizedDescription)")
+                sendSmartNotification(
+                    kind: .support,
+                    title: "Couldn’t update saved pieces",
+                    message: (error as? APIError)?.errorDescription ?? error.localizedDescription,
+                    emphasis: "Try again",
+                    actionTitle: nil,
+                    destination: nil
+                )
+            }
+        }
     }
 
     func addToBag(product: Product, size: String, color: Colorway) {
@@ -1038,7 +576,7 @@ final class AurelienStore {
                 try await updateCartLineQuantity(line, quantity: max(line.quantity + delta, 0))
                 BrandHaptics.selection()
             } catch {
-                print("Failed to update cart quantity: \(error)")
+                Logger.error("Failed to update cart quantity: \(error.localizedDescription)")
             }
         }
     }
@@ -1049,7 +587,7 @@ final class AurelienStore {
                 try await removeCartLine(line)
                 BrandHaptics.heavyImpact()
             } catch {
-                print("Failed to remove cart line: \(error)")
+                Logger.error("Failed to remove cart line: \(error.localizedDescription)")
             }
         }
     }
@@ -1175,6 +713,19 @@ final class AurelienStore {
     func markNotificationRead(_ notification: ClientNotification) {
         guard let index = notifications.firstIndex(where: { $0.id == notification.id }) else { return }
         notifications[index].isRead = true
+
+        guard currentUser != nil else { return }
+        Task {
+            do {
+                try await APIService.shared.markNotificationRead(id: notification.id)
+            } catch APIError.notFound {
+                // Local-only notification; keep the optimistic state.
+            } catch APIError.unauthorized {
+                logout()
+            } catch {
+                Logger.error("Failed to mark notification read: \(error.localizedDescription)")
+            }
+        }
     }
 
     func markAllNotificationsRead() {
@@ -1183,10 +734,34 @@ final class AurelienStore {
             updated.isRead = true
             return updated
         }
+
+        guard currentUser != nil else { return }
+        Task {
+            do {
+                try await APIService.shared.markAllNotificationsRead()
+            } catch APIError.unauthorized {
+                logout()
+            } catch {
+                Logger.error("Failed to mark all notifications read: \(error.localizedDescription)")
+            }
+        }
     }
 
     func removeNotification(_ notification: ClientNotification) {
         notifications.removeAll { $0.id == notification.id }
+
+        guard currentUser != nil else { return }
+        Task {
+            do {
+                try await APIService.shared.deleteNotification(id: notification.id)
+            } catch APIError.notFound {
+                // Local-only notification; deletion already applied locally.
+            } catch APIError.unauthorized {
+                logout()
+            } catch {
+                Logger.error("Failed to delete notification: \(error.localizedDescription)")
+            }
+        }
     }
 
     @discardableResult
@@ -1227,6 +802,18 @@ final class AurelienStore {
 
         savedAddresses.insert(address, at: 0)
         BrandHaptics.notificationSuccess()
+
+        if currentUser != nil {
+            Task {
+                do {
+                    savedAddresses = try await APIService.shared.createSavedAddress(address)
+                } catch APIError.unauthorized {
+                    logout()
+                } catch {
+                    Logger.error("Failed to create saved address: \(error.localizedDescription)")
+                }
+            }
+        }
         return address
     }
 
@@ -1235,7 +822,30 @@ final class AurelienStore {
         savedAddresses.removeAll { $0.id == id }
 
         if deletedWasPrimary, let first = savedAddresses.first {
-            setPrimaryAddress(id: first.id)
+            savedAddresses = savedAddresses.map { address in
+                SavedAddress(
+                    id: address.id,
+                    label: address.label,
+                    recipient: address.recipient,
+                    line1: address.line1,
+                    apartment: address.apartment,
+                    city: address.city,
+                    phone: address.phone,
+                    isPrimary: address.id == first.id
+                )
+            }
+        }
+
+        if currentUser != nil {
+            Task {
+                do {
+                    savedAddresses = try await APIService.shared.deleteSavedAddress(id: id)
+                } catch APIError.unauthorized {
+                    logout()
+                } catch {
+                    Logger.error("Failed to delete saved address: \(error.localizedDescription)")
+                }
+            }
         }
     }
 
@@ -1251,6 +861,18 @@ final class AurelienStore {
                 phone: address.phone,
                 isPrimary: address.id == id
             )
+        }
+
+        if currentUser != nil {
+            Task {
+                do {
+                    savedAddresses = try await APIService.shared.setPrimarySavedAddress(id: id)
+                } catch APIError.unauthorized {
+                    logout()
+                } catch {
+                    Logger.error("Failed to set primary address: \(error.localizedDescription)")
+                }
+            }
         }
     }
 
@@ -1340,7 +962,7 @@ final class AurelienStore {
         defaults.removeObject(forKey: StorageKey.authToken)
         defaults.removeObject(forKey: "aurelien.orders")
         defaults.removeObject(forKey: "aurelien.bag")
-        KeychainStore.deleteValue(for: StorageKey.authToken)
+        AuthTokenStore.deleteValue(for: AuthTokenStore.serviceKey)
 
         defaults.set(true, forKey: StorageKey.firstLaunchBootstrapComplete)
     }
@@ -1422,9 +1044,9 @@ final class AurelienStore {
         Self.saveValue(user, key: StorageKey.currentUser)
 
         if token.isEmpty {
-            KeychainStore.deleteValue(for: StorageKey.authToken)
+            AuthTokenStore.deleteValue(for: AuthTokenStore.serviceKey)
         } else {
-            KeychainStore.save(token, for: StorageKey.authToken)
+            AuthTokenStore.save(token, for: AuthTokenStore.serviceKey)
         }
 
         defaults.removeObject(forKey: StorageKey.authToken)
@@ -1465,16 +1087,37 @@ final class AurelienStore {
                 _ = try await loadCatalog(forceRefresh: forceRefresh)
             }
 
-            async let remoteProfile = APIService.shared.fetchClientProfile(userId: user.id)
-            async let remoteOrders = APIService.shared.fetchUserOrders(userId: user.id)
-            async let remoteCart = APIService.shared.fetchCart(userId: user.id)
+            profile = try await APIService.shared.fetchClientProfile(userId: user.id)
 
-            profile = try await remoteProfile
-            orders = try await remoteOrders
-                .sorted { ($0.createdAt ?? .distantPast) > ($1.createdAt ?? .distantPast) }
-            applyRemoteCart(try await remoteCart)
+            async let remoteOrders = try? APIService.shared.fetchUserOrders(userId: user.id)
+            async let remoteCart = try? APIService.shared.fetchCart(userId: user.id)
+            async let remoteWishlist = try? APIService.shared.fetchSavedProducts(userId: user.id)
+            async let remoteWallet = try? APIService.shared.fetchWalletSnapshot()
+            async let remoteNotifications = try? APIService.shared.fetchNotifications()
+
+            if let fetchedOrders = await remoteOrders {
+                orders = fetchedOrders.sorted { ($0.createdAt ?? .distantPast) > ($1.createdAt ?? .distantPast) }
+            }
+
+            if let fetchedCart = await remoteCart {
+                applyRemoteCart(fetchedCart)
+            }
+
+            if let fetchedWishlist = await remoteWishlist {
+                applyRemoteWishlist(fetchedWishlist)
+            }
+
+            if let fetchedWallet = await remoteWallet {
+                applyWalletSnapshot(fetchedWallet)
+            }
+
+            if let fetchedNotifications = await remoteNotifications {
+                mergeRemoteNotifications(fetchedNotifications)
+            }
+        } catch APIError.unauthorized {
+            logout()
         } catch {
-            print("Failed to hydrate authenticated session: \(error)")
+            Logger.error("Failed to hydrate authenticated session: \(error.localizedDescription)")
         }
     }
 
@@ -1490,6 +1133,7 @@ final class AurelienStore {
         paymentMethods = []
         profile = Self.defaultProfile(for: nil)
         latestCheckoutOrder = nil
+        wishlistOperationProductIDs.removeAll()
         selectedCategory = nil
         selectedBadge = nil
         selectedPriceBand = nil
@@ -1503,8 +1147,54 @@ final class AurelienStore {
 
         defaults.removeObject(forKey: StorageKey.currentUser)
         defaults.removeObject(forKey: StorageKey.authToken)
-        KeychainStore.deleteValue(for: StorageKey.authToken)
+        AuthTokenStore.deleteValue(for: AuthTokenStore.serviceKey)
         defaults.removeObject(forKey: StorageKey.selectedTab)
+    }
+
+    func completeLocalAccountDeletion() {
+        if let userId = currentUser?.id {
+            purgePersistedSessionData(for: userId)
+        }
+        logout()
+        selectedTab = .home
+    }
+
+    func deleteCurrentAccount() async throws {
+        guard currentUser != nil else {
+            completeLocalAccountDeletion()
+            return
+        }
+
+        try await APIService.shared.deleteCurrentUser()
+        completeLocalAccountDeletion()
+    }
+
+    private func purgePersistedSessionData(for userId: String) {
+        let sessionScopedKeys = [
+            StorageKey.navigationPath,
+            StorageKey.recentQueries,
+            StorageKey.wishlist,
+            StorageKey.notifications,
+            StorageKey.savedAddresses,
+            StorageKey.paymentMethods,
+            StorageKey.bag,
+            StorageKey.orders,
+            StorageKey.clientProfile,
+            StorageKey.latestCheckoutOrder,
+            StorageKey.selectedCategory,
+            StorageKey.selectedBadge,
+            StorageKey.selectedPriceBand,
+            StorageKey.selectedSort,
+            Self.navigationStorageKey(for: .home),
+            Self.navigationStorageKey(for: .discover),
+            Self.navigationStorageKey(for: .shop),
+            Self.navigationStorageKey(for: .bag),
+            Self.navigationStorageKey(for: .account)
+        ]
+
+        for key in sessionScopedKeys {
+            defaults.removeObject(forKey: Self.storageKey(key, userId: userId))
+        }
     }
 
     // MARK: - App Lifecycle
@@ -1514,7 +1204,7 @@ final class AurelienStore {
             Self.saveValue(currentUser, key: StorageKey.currentUser)
         }
         if let authToken, authToken.isEmpty == false {
-            KeychainStore.save(authToken, for: StorageKey.authToken)
+            AuthTokenStore.save(authToken, for: AuthTokenStore.serviceKey)
         }
         persist(navigationPath, key: StorageKey.navigationPath)
         persistNavigationPath(homeNavigationPath, for: .home)
@@ -1533,6 +1223,9 @@ final class AurelienStore {
         Task {
             await refreshCatalogFromBackend(forceRefresh: elapsed > 60 * 10)
             await refreshProfileFromBackend(forceRefresh: elapsed > 60 * 10)
+            await refreshWishlistFromBackend()
+            await refreshWalletFromBackend()
+            await refreshNotificationsFromBackend()
         }
 
         if elapsed > 60 * 60 * 12 {
@@ -1574,6 +1267,24 @@ final class AurelienStore {
     }
     
     // MARK: - Backend Sync
+    private func applyRemoteWishlist(_ savedProducts: [Product]) {
+        wishlist = Set(
+            savedProducts
+                .filter { $0.isValid && !$0.isExcluded }
+                .map(\.id)
+        )
+    }
+
+    private func applyWalletSnapshot(_ snapshot: WalletSnapshot) {
+        savedAddresses = snapshot.savedAddresses
+        paymentMethods = snapshot.paymentMethods
+    }
+
+    private func mergeRemoteNotifications(_ remoteNotifications: [ClientNotification]) {
+        let remoteIDs = Set(remoteNotifications.map(\.id))
+        notifications = remoteNotifications + notifications.filter { !remoteIDs.contains($0.id) }
+    }
+
     private func applyRemoteCart(_ cart: Cart) {
         let mappedLines = cart.items.compactMap { item -> BagLine? in
             guard let product = products.first(where: { $0.id == item.productId }) else {
@@ -1597,6 +1308,53 @@ final class AurelienStore {
         bag = mappedLines
     }
 
+    func refreshWishlistFromBackend() async {
+        guard let userId = currentUser?.id else {
+            wishlist = []
+            return
+        }
+
+        do {
+            let savedProducts = try await APIService.shared.fetchSavedProducts(userId: userId)
+            applyRemoteWishlist(savedProducts)
+        } catch APIError.unauthorized {
+            logout()
+        } catch {
+            Logger.error("Failed to refresh wishlist: \(error.localizedDescription)")
+        }
+    }
+
+    func refreshWalletFromBackend() async {
+        guard currentUser != nil else {
+            savedAddresses = []
+            paymentMethods = []
+            return
+        }
+
+        do {
+            applyWalletSnapshot(try await APIService.shared.fetchWalletSnapshot())
+        } catch APIError.unauthorized {
+            logout()
+        } catch {
+            Logger.error("Failed to refresh wallet: \(error.localizedDescription)")
+        }
+    }
+
+    func refreshNotificationsFromBackend() async {
+        guard currentUser != nil else {
+            notifications = []
+            return
+        }
+
+        do {
+            mergeRemoteNotifications(try await APIService.shared.fetchNotifications())
+        } catch APIError.unauthorized {
+            logout()
+        } catch {
+            Logger.error("Failed to refresh notifications: \(error.localizedDescription)")
+        }
+    }
+
     func refreshCartFromBackend() async {
         guard let userId = currentUser?.id else {
             bag = []
@@ -1607,7 +1365,7 @@ final class AurelienStore {
             let cart = try await APIService.shared.fetchCart(userId: userId)
             applyRemoteCart(cart)
         } catch {
-            print("Failed to refresh cart: \(error)")
+            Logger.error("Failed to refresh cart: \(error.localizedDescription)")
         }
     }
 
@@ -1720,7 +1478,7 @@ final class AurelienStore {
         do {
             _ = try await loadCatalog(forceRefresh: forceRefresh)
         } catch {
-            print("Failed to refresh catalog: \(error)")
+            Logger.error("Failed to refresh catalog: \(error.localizedDescription)")
         }
     }
 
@@ -1736,7 +1494,7 @@ final class AurelienStore {
             if profile.email.isEmpty {
                 profile = Self.defaultProfile(for: user)
             }
-            print("Failed to refresh profile: \(error)")
+            Logger.error("Failed to refresh profile: \(error.localizedDescription)")
         }
     }
     
@@ -1949,48 +1707,5 @@ struct DecodedAuthTokenPayload: Decodable {
         }
 
         return Data(base64Encoded: base64)
-    }
-}
-
-private enum KeychainStore {
-    static func save(_ value: String, for key: String) {
-        guard let data = value.data(using: .utf8) else { return }
-
-        let query = baseQuery(for: key)
-        SecItemDelete(query as CFDictionary)
-
-        var addQuery = query
-        addQuery[kSecValueData as String] = data
-        SecItemAdd(addQuery as CFDictionary, nil)
-    }
-
-    static func value(for key: String) -> String? {
-        var query = baseQuery(for: key)
-        query[kSecReturnData as String] = true
-        query[kSecMatchLimit as String] = kSecMatchLimitOne
-
-        var result: AnyObject?
-        let status = SecItemCopyMatching(query as CFDictionary, &result)
-
-        guard status == errSecSuccess,
-              let data = result as? Data,
-              let value = String(data: data, encoding: .utf8) else {
-            return nil
-        }
-
-        return value
-    }
-
-    static func deleteValue(for key: String) {
-        SecItemDelete(baseQuery(for: key) as CFDictionary)
-    }
-
-    private static func baseQuery(for key: String) -> [String: Any] {
-        [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: "com.shereenmagdy.aurelien",
-            kSecAttrAccount as String: key,
-            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
-        ]
     }
 }

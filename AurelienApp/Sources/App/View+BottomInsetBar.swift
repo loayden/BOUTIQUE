@@ -10,7 +10,6 @@ public extension View {
                 .background(
                     Rectangle()
                         .fill(BrandPalette.background.opacity(0.96))
-                        .background(.ultraThinMaterial)
                         .overlay(alignment: .top) {
                             Rectangle()
                                 .fill(BrandPalette.hairline)

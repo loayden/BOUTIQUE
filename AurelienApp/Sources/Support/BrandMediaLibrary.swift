@@ -68,18 +68,9 @@ enum BrandMediaLibrary {
         let name = (fileName as NSString).deletingPathExtension
         let ext = (fileName as NSString).pathExtension.lowercased()
 
-        // Debug: Print bundle path
-        #if DEBUG
-        print("[BrandMediaLibrary] Looking for: \(fileName)")
-        print("[BrandMediaLibrary] Bundle path: \(bundle.bundlePath)")
-        #endif
-
         // Try with original extension
         if let path = bundle.path(forResource: name, ofType: ext.isEmpty ? nil : ext),
            let image = UIImage(contentsOfFile: path) {
-            #if DEBUG
-            print("[BrandMediaLibrary] Found at: \(path)")
-            #endif
             return image
         }
 
@@ -87,9 +78,6 @@ enum BrandMediaLibrary {
         for imageExt in ["jpg", "jpeg", "png", "JPG", "JPEG", "PNG"] {
             if let path = bundle.path(forResource: name, ofType: imageExt),
                let image = UIImage(contentsOfFile: path) {
-                #if DEBUG
-                print("[BrandMediaLibrary] Found with ext .\(imageExt) at: \(path)")
-                #endif
                 return image
             }
         }
@@ -97,24 +85,15 @@ enum BrandMediaLibrary {
         // Try with URL API
         if let url = bundle.url(forResource: name, withExtension: ext.isEmpty ? "jpg" : ext),
            let image = UIImage(contentsOfFile: url.path) {
-            #if DEBUG
-            print("[BrandMediaLibrary] Found via URL: \(url.path)")
-            #endif
             return image
         }
 
         // Try without extension (if file has no extension)
         if let path = bundle.path(forResource: fileName, ofType: nil),
            let image = UIImage(contentsOfFile: path) {
-            #if DEBUG
-            print("[BrandMediaLibrary] Found without extension: \(path)")
-            #endif
             return image
         }
 
-        #if DEBUG
-        print("[BrandMediaLibrary] Image not found: \(fileName)")
-        #endif
         return nil
     }
 }

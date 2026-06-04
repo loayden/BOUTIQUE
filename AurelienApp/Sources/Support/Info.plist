@@ -35,30 +35,12 @@
 	<string>$(AURELIEN_API_BASE_URL)</string>
 	<key>AURELIEN_STATIC_CONTENT_BASE_URL</key>
 	<string>$(AURELIEN_STATIC_CONTENT_BASE_URL)</string>
+	<key>BOUTIQUE_PRIVACY_POLICY_URL</key>
+	<string>$(BOUTIQUE_PRIVACY_POLICY_URL)</string>
+	<key>BOUTIQUE_SUPPORT_URL</key>
+	<string>$(BOUTIQUE_SUPPORT_URL)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<key>NSCameraUsageDescription</key>
-	<string>BOUTIQUE uses the camera only when you choose to capture a product or support photo.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>BOUTIQUE uses your photo library only when you choose product photos to upload.</string>
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<key>NSExceptionDomains</key>
-		<dict>
-			<key>127.0.0.1</key>
-			<dict>
-				<key>NSExceptionAllowsInsecureHTTPLoads</key>
-				<true/>
-			</dict>
-			<key>localhost</key>
-			<dict>
-				<key>NSExceptionAllowsInsecureHTTPLoads</key>
-				<true/>
-				<key>NSIncludesSubdomains</key>
-				<true/>
-			</dict>
-		</dict>
-	</dict>
 	<key>UIAppFonts</key>
 	<array>
 		<string>CormorantGaramond[wght].ttf</string>
@@ -73,8 +55,6 @@
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>

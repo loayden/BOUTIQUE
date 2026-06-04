@@ -1,9 +1,14 @@
 import SwiftUI
 
+final class AppChromeState: ObservableObject {
+    @Published var isTabBarHidden = false
+}
+
 struct AppShellView: View {
     @Environment(AurelienStore.self) private var store
     @Environment(NetworkMonitor.self) private var networkMonitor
     @AppStorage("aurelien.didCompleteOnboarding.v2") private var didCompleteOnboarding = false
+    @StateObject private var chromeState = AppChromeState()
     @State private var showSplash = true
     @State private var mountedTabs: Set<AppTab> = [.home]
 
@@ -29,6 +34,7 @@ struct AppShellView: View {
             },
             mainAppView: {
                 authenticatedShell
+                    .environmentObject(chromeState)
             }
         )
     }
@@ -37,7 +43,9 @@ struct AppShellView: View {
         ZStack(alignment: .bottom) {
             tabContainer
                 .safeAreaInset(edge: .bottom, spacing: 0) {
-                    BoutTabBar(selectedTab: tabSelection, bagCount: store.bagCount)
+                    if chromeState.isTabBarHidden == false {
+                        BoutTabBar(selectedTab: tabSelection, bagCount: store.bagCount)
+                    }
                 }
                 .onOpenURL(perform: handleDeepLink)
                 .sheet(item: activeSheetBinding) { sheet in
@@ -47,17 +55,25 @@ struct AppShellView: View {
             if networkMonitor.isConnected == false && APIConfig.usesEmbeddedStaticBackend == false {
                 NetworkStatusBanner(message: networkMonitor.statusDescription)
                     .padding(.horizontal, 16)
-                    .padding(.bottom, MobileChrome.bottomOverlayInset(for: UIScreen.main.bounds.width))
+                    .padding(.bottom, chromeState.isTabBarHidden ? 16 : MobileChrome.bottomOverlayInset(for: UIScreen.main.bounds.width))
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                     .zIndex(2)
             }
         }
         .animation(.easeInOut(duration: 0.25), value: networkMonitor.isConnected)
+        .animation(.easeInOut(duration: 0.2), value: chromeState.isTabBarHidden)
         .onAppear {
             if let preferredTab = AppTab(rawValue: UserDefaults.standard.string(forKey: "settings.defaultLandingTab") ?? ""),
                store.path(for: store.selectedTab).isEmpty,
-               store.selectedTab == .home {
-                store.selectedTab = preferredTab
+               store.selectedTab == .home,
+               preferredTab != .home {
+                Task { @MainActor in
+                    await Task.yield()
+                    guard store.selectedTab == .home, store.path(for: .home).isEmpty else {
+                        return
+                    }
+                    store.selectedTab = preferredTab
+                }
             }
         }
     }
@@ -132,7 +148,11 @@ struct AppShellView: View {
 
     @ViewBuilder
     private func destination(for route: AppRoute) -> some View {
-        switch route {
+        switch AppExperiencePolicy.publicRoute(
+            for: route,
+            isAdmin: store.isAdmin,
+            isAuthenticated: store.isAuthenticated
+        ) {
         case .home:
             HomeView(selectedTab: tabSelection)
         case .discover:
@@ -217,6 +237,15 @@ struct AppShellView: View {
         case "wallet":
             store.selectedTab = .account
             store.handleDeepLink(.wallet)
+        case "admin":
+            store.selectedTab = .account
+            store.handleDeepLink(
+                AppExperiencePolicy.publicRoute(
+                    for: .admin,
+                    isAdmin: store.isAdmin,
+                    isAuthenticated: store.isAuthenticated
+                )
+            )
         case "support":
             store.selectedTab = .account
             store.handleDeepLink(.support)
@@ -288,13 +317,18 @@ private struct AppRootView<Splash: View, Onboarding: View, Auth: View, MainApp: 
 
     var body: some View {
         Group {
-            if showSplash {
+            switch AppLaunchDestination.resolve(
+                showSplash: showSplash,
+                didCompleteOnboarding: didCompleteOnboarding,
+                isAuthenticated: isAuthenticated
+            ) {
+            case .splash:
                 splashView()
-            } else if !isAuthenticated && !didCompleteOnboarding {
+            case .onboarding:
                 onboardingView()
-            } else if isAuthenticated {
+            case .mainApp:
                 mainAppView()
-            } else {
+            case .auth:
                 authView()
             }
         }
@@ -469,7 +503,7 @@ private struct NetworkStatusBanner: View {
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: "wifi.slash")
-                .foregroundStyle(BrandPalette.gold)
+                .foregroundStyle(BrandPalette.goldDeep)
 
             Text(message)
                 .font(BrandFont.mobileCaption())
@@ -484,15 +518,7 @@ private struct NetworkStatusBanner: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
         .frame(maxWidth: .infinity)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(BrandPalette.surfaceRaised.opacity(0.96))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(BrandPalette.hairlineStrong, lineWidth: 0.5)
-        )
-        .shadow(color: BrandPalette.shadowSoft, radius: 10, x: 0, y: 6)
+        .brandPanel(cornerRadius: 16, tone: .chrome, material: true)
     }
 }
 
@@ -535,9 +561,9 @@ private struct LaunchSplashView: View {
                         .opacity(contentVisible ? 1 : 0)
 
                     Text("BOUTIQUE")
-                        .font(BrandFont.serif(28, relativeTo: .largeTitle))
-                        .fontWeight(.bold)
+                        .font(BrandFont.displayHero())
                         .foregroundStyle(BrandPalette.textPrimary)
+                        .tracking(1.4)
                         .multilineTextAlignment(.center)
                         .scaleEffect(logoScaled ? 1.0 : 0.95)
                         .opacity(contentVisible ? 1 : 0)

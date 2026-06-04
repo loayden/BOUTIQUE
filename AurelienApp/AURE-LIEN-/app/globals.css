@@ -11,6 +11,9 @@
   --accent: #a87935;
   --accent-text: #7a581f;
   --border-warm: rgba(123, 103, 82, 0.18);
+  --product-card-ratio: 4 / 5;
+  --product-media-stage: #f5efe6;
+  --hero-media-stage: rgba(255, 249, 239, 0.78);
 }
 
 * {
@@ -84,6 +87,65 @@ section,
 article {
   content-visibility: auto;
   contain-intrinsic-size: 1px 640px;
+}
+
+.product-card {
+  overflow: hidden;
+  border-radius: 1.125rem;
+  border: 1px solid var(--border-warm);
+  background: rgba(255, 249, 239, 0.62);
+  transition:
+    transform 220ms ease,
+    box-shadow 220ms ease,
+    border-color 220ms ease;
+}
+
+.product-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 42px rgba(61, 48, 37, 0.11);
+  border-color: rgba(123, 103, 82, 0.28);
+}
+
+.product-media-frame {
+  position: relative;
+  aspect-ratio: var(--product-card-ratio);
+  overflow: hidden;
+  background: var(--product-media-stage);
+}
+
+.product-media-image {
+  object-fit: cover;
+  object-position: center 18%;
+  transition: transform 360ms ease;
+}
+
+.product-card:hover .product-media-image {
+  transform: scale(1.025);
+}
+
+.editorial-hero-panel {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.5rem;
+  border: 1px solid var(--border-warm);
+  background: var(--hero-media-stage);
+  box-shadow: 0 24px 80px rgba(61, 48, 37, 0.12);
+}
+
+.editorial-hero-frame {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  min-height: clamp(22rem, 56vw, 32rem);
+}
+
+.editorial-hero-image {
+  object-fit: cover;
+  transition: transform 420ms ease;
+}
+
+.editorial-hero-panel:hover .editorial-hero-image {
+  transform: scale(1.015);
 }
 
 /* iOS safe area support */

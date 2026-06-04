@@ -2,7 +2,6 @@ const path = require('path')
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  distDir: 'dist',
   outputFileTracingRoot: path.join(__dirname),
 
   images: {

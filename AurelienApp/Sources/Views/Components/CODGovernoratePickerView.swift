@@ -56,8 +56,7 @@ struct CODGovernoratePickerView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(
                     RoundedRectangle(cornerRadius: BrandRadius.card, style: .continuous)
-                        .fill(BrandPalette.overlay.opacity(0.9))
-                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: BrandRadius.card, style: .continuous))
+                        .fill(BrandPalette.backgroundWarm.opacity(0.94))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: BrandRadius.card, style: .continuous)
@@ -104,8 +103,7 @@ struct CODGovernoratePickerView: View {
                 .padding(.top, BrandSpacing.sm)
                 .padding(.bottom, BrandSpacing.sm)
                 .background(
-                    BrandPalette.background.opacity(0.94)
-                        .background(.ultraThinMaterial)
+                    BrandPalette.background.opacity(0.96)
                 )
             }
             .presentationCompactAdaptation(.fullScreenCover)

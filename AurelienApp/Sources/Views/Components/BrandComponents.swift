@@ -19,11 +19,11 @@ struct MediaImage: View {
                         image
                             .resizable()
                     case .failure:
-                        placeholder
+                        fallbackLocalImage(placeholder)
                     case .empty:
-                        skeleton
+                        fallbackLocalImage(skeleton)
                     @unknown default:
-                        placeholder
+                        fallbackLocalImage(placeholder)
                     }
                 }
             } else if let image = BrandMediaLibrary.image(named: name) {
@@ -32,6 +32,17 @@ struct MediaImage: View {
             } else {
                 placeholder
             }
+        }
+    }
+
+    @ViewBuilder
+    private func fallbackLocalImage<Content: View>(_ fallback: Content) -> some View {
+        if let fallbackName = URL(string: name)?.lastPathComponent,
+           let image = BrandMediaLibrary.image(named: fallbackName) {
+            Image(uiImage: image)
+                .resizable()
+        } else {
+            fallback
         }
     }
 
@@ -71,43 +82,9 @@ struct MediaImage: View {
 }
 
 struct AmbientBackdrop: View {
-    @State private var phase: CGFloat = 0
-
     var body: some View {
-        ZStack {
-            BrandPalette.backgroundGradient
-                .ignoresSafeArea()
-
-            RadialGradient(
-                colors: [
-                    Color.boutGold.opacity(0.08 + phase * 0.02),
-                    Color.clear
-                ],
-                center: UnitPoint(x: 0.82 + phase * 0.06, y: 0.12 - phase * 0.04),
-                startRadius: 0,
-                endRadius: 250
-            )
+        BrandPalette.backgroundGradient
             .ignoresSafeArea()
-
-            RadialGradient(
-                colors: [
-                    Color.boutCreamTop.opacity(0.42 + phase * 0.04),
-                    Color.clear
-                ],
-                center: UnitPoint(x: 0.50, y: 0.88 + phase * 0.04),
-                startRadius: 0,
-                endRadius: 210
-            )
-            .ignoresSafeArea()
-        }
-        .onAppear {
-            withAnimation(
-                .easeInOut(duration: 10)
-                .repeatForever(autoreverses: true)
-            ) {
-                phase = 1.0
-            }
-        }
     }
 }
 
@@ -120,19 +97,19 @@ private struct BrandPanelModifier: ViewModifier {
         switch tone {
         case .shadow:
             return LinearGradient(
-                colors: [Color.boutGlassTop, Color.boutGlassBottom, BrandPalette.surfaceRaised],
+                colors: [Color.boutCreamTop.opacity(0.96), BrandPalette.surfaceRaised, Color.white.opacity(0.52)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
         case .chrome:
             return LinearGradient(
-                colors: [Color.boutGlassTop, Color.boutGlassBottom, Color.boutCream.opacity(0.62)],
+                colors: [Color.white.opacity(0.70), Color.boutCreamTop.opacity(0.96), BrandPalette.surfaceRaised],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
         case .gold:
             return LinearGradient(
-                colors: [Color.boutGold.opacity(0.12), Color.boutGlassTop, Color.boutGlassBottom],
+                colors: [Color.boutGold.opacity(0.10), Color.boutCreamTop.opacity(0.96), BrandPalette.surfaceRaised],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
@@ -158,7 +135,7 @@ private struct BrandPanelModifier: ViewModifier {
                 shape
                     .fill(fill)
                     .background(
-                        material ? AnyView(shape.fill(.thinMaterial).opacity(0.38)) : AnyView(EmptyView())
+                        material ? AnyView(shape.fill(BrandPalette.backgroundWarm.opacity(0.34))) : AnyView(EmptyView())
                     )
             )
             .overlay(
@@ -166,7 +143,7 @@ private struct BrandPanelModifier: ViewModifier {
                     .stroke(strokeColor, lineWidth: 0.5)
             )
             .clipShape(shape)
-            .shadow(color: BrandPalette.shadowSoft, radius: 7, x: 0, y: 4)
+            .shadow(color: BrandPalette.shadowSoft, radius: 10, x: 0, y: 6)
     }
 }
 
@@ -188,12 +165,12 @@ struct BrandSectionHeader: View {
     var action: (() -> Void)? = nil
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 7) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
                 Text(eyebrow.uppercased())
-                    .font(.caption.weight(.semibold))
-                    .tracking(1.8)
-                    .foregroundStyle(BrandPalette.textSecondary)
+                    .font(BrandFont.labelCapsule())
+                    .tracking(3.2)
+                    .foregroundStyle(BrandPalette.goldDeep)
                     .lineLimit(1)
                     .minimumScaleFactor(0.76)
 
@@ -202,24 +179,24 @@ struct BrandSectionHeader: View {
                 if let actionTitle, let action {
                     Button(actionTitle, action: action)
                         .buttonStyle(.plain)
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(BrandPalette.gold)
+                        .font(BrandFont.mobileCaption())
+                        .foregroundStyle(BrandPalette.goldDeep)
                 }
             }
 
             Text(title)
-                .font(BrandFont.serif(22, relativeTo: .title2))
+                .font(BrandFont.displayEditorial())
                 .foregroundStyle(BrandPalette.textPrimary)
                 .lineLimit(3)
-                .lineSpacing(3)
+                .lineSpacing(4)
                 .fixedSize(horizontal: false, vertical: true)
 
             if let copy {
                 Text(copy)
                     .font(BrandFont.mobileBody())
                     .foregroundStyle(BrandPalette.textSecondary)
-                    .lineLimit(3)
-                    .lineSpacing(3)
+                    .lineLimit(4)
+                    .lineSpacing(4)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -233,16 +210,17 @@ struct BrandCapsuleButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.subheadline.weight(.semibold))
-            .foregroundStyle(tone == .gold ? Color.boutCreamTop : BrandPalette.textPrimary)
+            .font(BrandFont.mobileCaption())
+            .tracking(1.6)
+            .foregroundStyle(foregroundColor)
             .padding(.horizontal, horizontalPadding)
-            .padding(.vertical, 12)
-            .frame(minHeight: 48)
+            .padding(.vertical, 13)
+            .frame(minHeight: 44)
             .frame(maxWidth: .infinity)
             .background(background(configuration: configuration))
             .overlay(
                 Capsule(style: .continuous)
-                    .stroke(tone == .gold ? Color.boutButtonEnd.opacity(0.32) : BrandPalette.hairlineStrong, lineWidth: 0.5)
+                    .stroke(borderColor, lineWidth: 0.5)
             )
             .clipShape(Capsule(style: .continuous))
             .opacity(isEnabled ? 1 : 0.58)
@@ -255,19 +233,35 @@ struct BrandCapsuleButtonStyle: ButtonStyle {
     private func background(configuration: Configuration) -> some View {
         if tone == .gold {
             Capsule(style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: configuration.isPressed
-                            ? [Color.boutButtonEnd, Color.boutButtonStart]
-                            : [Color.boutButtonStart, Color.boutButtonEnd],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+                .fill(configuration.isPressed ? Color.boutButtonEnd : Color.boutButtonStart)
+        } else if tone == .shadow {
+            Capsule(style: .continuous)
+                .fill(configuration.isPressed ? BrandPalette.gold.opacity(0.18) : BrandPalette.goldDim)
         } else {
             Capsule(style: .continuous)
-                .fill(Color.boutGlassBottom)
-                .background(.thinMaterial, in: Capsule(style: .continuous))
+                .fill(configuration.isPressed ? BrandPalette.surfaceRaised : BrandPalette.surface)
+        }
+    }
+
+    private var foregroundColor: Color {
+        switch tone {
+        case .gold:
+            return Color.boutCreamTop
+        case .shadow:
+            return BrandPalette.goldDeep
+        case .chrome:
+            return BrandPalette.textPrimary
+        }
+    }
+
+    private var borderColor: Color {
+        switch tone {
+        case .gold:
+            return Color.boutButtonEnd.opacity(0.24)
+        case .shadow:
+            return BrandPalette.goldBorder
+        case .chrome:
+            return BrandPalette.hairlineStrong
         }
     }
 }
@@ -306,7 +300,7 @@ struct BagFloatingButton: View {
                     .font(.headline)
                     .foregroundStyle(Color.boutCreamTop)
                     .frame(width: 56, height: 56)
-                    .background(BrandPalette.goldGradient, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .background(Color.boutButtonStart, in: Circle())
 
                 if count > 0 {
                         Text("\(min(count, 99))")
@@ -336,11 +330,11 @@ struct BrandGlassIconButton: View {
                 .foregroundStyle(accent)
                 .frame(width: 44, height: 44)
                 .background(
-                    RoundedRectangle(cornerRadius: BrandRadius.soft, style: .continuous)
+                    Circle()
                         .fill(tone == .gold ? BrandPalette.goldDim : BrandPalette.surfaceRaised)
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: BrandRadius.soft, style: .continuous)
+                    Circle()
                         .stroke(tone == .gold ? BrandPalette.goldBorder : BrandPalette.hairlineStrong, lineWidth: 0.5)
                 )
         }
@@ -356,7 +350,7 @@ struct BrandStatCard: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(stat.value)
                 .font(BrandFont.serif(24, relativeTo: .title2))
-                .foregroundStyle(tone == .gold ? BrandPalette.gold : BrandPalette.textPrimary)
+                .foregroundStyle(tone == .gold ? BrandPalette.goldDeep : BrandPalette.textPrimary)
 
             Text(stat.label.uppercased())
                 .font(.caption.weight(.semibold))
@@ -383,24 +377,30 @@ struct EmptyStatePanel: View {
 
     var body: some View {
         VStack(spacing: BrandSpacing.md) {
-            Image(systemName: "bag.fill")
-                .font(.largeTitle)
-                .foregroundStyle(BrandPalette.textSecondary)
+            Circle()
+                .fill(BrandPalette.goldDim)
+                .frame(width: 68, height: 68)
+                .overlay(
+                    Image(systemName: "bag")
+                        .font(.title2.weight(.medium))
+                        .foregroundStyle(BrandPalette.goldDeep)
+                )
 
             Text(title)
-                .font(BrandFont.serif(22, relativeTo: .title3))
+                .font(BrandFont.mobileTitle2())
                 .foregroundStyle(BrandPalette.textPrimary)
                 .multilineTextAlignment(.center)
 
             Text(copy)
-                .font(.subheadline)
+                .font(BrandFont.mobileBody())
                 .foregroundStyle(BrandPalette.textSecondary)
                 .multilineTextAlignment(.center)
+                .lineSpacing(4)
 
             Button(buttonTitle, action: action)
                 .buttonStyle(BrandCapsuleButtonStyle(tone: .gold))
         }
-        .padding(24)
+        .padding(28)
         .frame(maxWidth: .infinity)
         .brandPanel(cornerRadius: BrandRadius.card, tone: .shadow, material: true)
     }
@@ -423,13 +423,13 @@ struct BrandField: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 4) {
                 Text(title.uppercased())
-                    .font(.caption.weight(.semibold))
-                    .tracking(2)
-                    .foregroundStyle(isFocused ? BrandPalette.gold : BrandPalette.textMuted)
+                    .font(BrandFont.labelCapsule())
+                    .tracking(3)
+                    .foregroundStyle(isFocused ? BrandPalette.goldDeep : BrandPalette.textMuted)
                 if isRequired {
                     Text("*")
                         .font(.caption.weight(.bold))
-                        .foregroundStyle(BrandPalette.gold)
+                        .foregroundStyle(BrandPalette.goldDeep)
                 }
             }
             .animation(.easeInOut(duration: 0.2), value: isFocused)
@@ -440,21 +440,21 @@ struct BrandField: View {
                 .textInputAutocapitalization(autocapitalization)
                 .autocorrectionDisabled(autocorrectionDisabled)
                 .submitLabel(submitLabel)
-                .font(.body)
+                .font(BrandFont.mobileBody())
                 .foregroundStyle(BrandPalette.textPrimary)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 14)
-                .frame(minHeight: 52)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 16)
+                .frame(minHeight: 56)
                 .focused($isFocused)
                 .background(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(BrandPalette.surfaceRaised)
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .fill(BrandPalette.surface)
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
                         .stroke(
                             isFocused
-                                ? BrandPalette.gold.opacity(0.55)
+                                ? BrandPalette.goldDeep.opacity(0.42)
                                 : (errorMessage != nil
                                     ? Color.red.opacity(0.5)
                                     : BrandPalette.hairlineStrong),
@@ -463,7 +463,7 @@ struct BrandField: View {
                         .animation(.easeInOut(duration: 0.2), value: isFocused)
                 )
                 .shadow(
-                    color: isFocused ? BrandPalette.gold.opacity(0.12) : .clear,
+                    color: isFocused ? BrandPalette.gold.opacity(0.10) : .clear,
                     radius: 8, x: 0, y: 2
                 )
 
@@ -490,7 +490,7 @@ struct QuantityStepper: View {
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(BrandPalette.textSecondary)
                     .frame(width: 44, height: 44)
-                    .background(BrandPalette.surfaceRaised, in: Circle())
+                    .background(BrandPalette.surface, in: Circle())
             }
             .buttonStyle(.plain)
 
@@ -504,7 +504,7 @@ struct QuantityStepper: View {
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(Color.boutCreamTop)
                     .frame(width: 44, height: 44)
-                    .background(BrandPalette.goldGradient, in: Circle())
+                    .background(Color.boutButtonStart, in: Circle())
             }
             .buttonStyle(.plain)
         }
@@ -512,7 +512,7 @@ struct QuantityStepper: View {
         .padding(.vertical, 4)
         .background(
             Capsule(style: .continuous)
-                .fill(Color.boutGlassBottom)
+                .fill(BrandPalette.surfaceRaised)
         )
         .overlay(
             Capsule(style: .continuous)
@@ -523,11 +523,8 @@ struct QuantityStepper: View {
 
 struct DividerGlow: View {
     var body: some View {
-        LinearGradient(
-            colors: [Color.clear, BrandPalette.goldBorder, Color.clear],
-            startPoint: .leading,
-            endPoint: .trailing
-        )
+        Rectangle()
+            .fill(BrandPalette.hairline)
         .frame(height: 1)
     }
 }
@@ -720,9 +717,10 @@ struct BoutBackButton: ViewModifier {
                             Image(systemName: "chevron.left")
                                 .font(.system(size: 15, weight: .medium))
                             Text(label)
-                                .font(.subheadline.weight(.medium))
+                                .font(BrandFont.mobileCaption())
+                                .tracking(1.2)
                         }
-                        .foregroundStyle(BrandPalette.gold)
+                        .foregroundStyle(BrandPalette.goldDeep)
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
@@ -752,28 +750,19 @@ struct BoutTabBar: View {
         .padding(.horizontal, 6)
         .padding(.vertical, 8)
         .background {
-            Capsule(style: .continuous)
-                .fill(Color.boutGlassTop)
-                .background(.thinMaterial, in: Capsule(style: .continuous))
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(BrandPalette.backgroundWarm.opacity(0.96))
                 .overlay {
-                    Capsule(style: .continuous)
-                        .fill(Color.boutGlassBottom)
-                }
-                .overlay {
-                    Capsule(style: .continuous)
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
                         .stroke(Color.boutBorderStrong, lineWidth: 0.5)
                 }
                 .shadow(
-                    color: BrandPalette.shadowMedium,
-                    radius: 18, x: 0, y: 6
-                )
-                .shadow(
-                    color: BrandPalette.gold.opacity(0.05),
-                    radius: 22, x: 0, y: 3
+                    color: BrandPalette.shadowSoft,
+                    radius: 12, x: 0, y: 6
                 )
         }
         .padding(.horizontal, 16)
-        .padding(.bottom, 6)
+        .padding(.bottom, 4)
     }
 
     private func tabItem(_ tab: AppTab) -> some View {
@@ -787,17 +776,16 @@ struct BoutTabBar: View {
                 BrandHaptics.selection()
             }
         } label: {
-            VStack(spacing: 4) {
+            VStack(spacing: 5) {
                 ZStack(alignment: .topTrailing) {
                     Image(systemName: isSelected ? tab.selectedIcon : tab.icon)
-                        .font(.system(size: 19, weight: isSelected ? .semibold : .regular))
+                        .font(.system(size: 18, weight: isSelected ? .semibold : .regular))
                         .foregroundStyle(
                             isSelected
-                                ? BrandPalette.gold
-                                : BrandPalette.textSecondary.opacity(0.72)
+                                ? BrandPalette.textPrimary
+                                : BrandPalette.textSecondary.opacity(0.78)
                         )
-                        .scaleEffect(isSelected ? 1.08 : 1.0)
-                        .animation(.spring(response: 0.35, dampingFraction: 0.65), value: isSelected)
+                        .animation(.easeInOut(duration: 0.18), value: isSelected)
 
                     if tab == .bag && bagCount > 0 {
                         Text("\(min(bagCount, 99))")
@@ -805,28 +793,33 @@ struct BoutTabBar: View {
                             .foregroundStyle(Color.boutCreamTop)
                             .padding(.horizontal, 4)
                             .padding(.vertical, 2)
-                            .background(BrandPalette.gold, in: Capsule())
+                            .background(BrandPalette.goldDeep, in: Capsule())
                             .offset(x: 8, y: -6)
-                            .scaleEffect(isSelected ? 1.1 : 1.0)
                             .animation(.spring(response: 0.3), value: bagCount)
                     }
                 }
                 .frame(height: 24)
 
                 Text(tab.label)
-                    .font(.system(size: 10, weight: isSelected ? .semibold : .regular))
+                    .font(BrandFont.mobileCaption2())
+                    .tracking(1.8)
                     .foregroundStyle(
                         isSelected
-                            ? BrandPalette.gold
-                            : BrandPalette.textSecondary.opacity(0.72)
+                            ? BrandPalette.textPrimary
+                            : BrandPalette.textSecondary.opacity(0.78)
                     )
+                    .animation(.easeInOut(duration: 0.2), value: isSelected)
+
+                Capsule(style: .continuous)
+                    .fill(isSelected ? BrandPalette.goldDeep : Color.clear)
+                    .frame(width: 16, height: 3)
                     .animation(.easeInOut(duration: 0.2), value: isSelected)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 7)
+            .padding(.vertical, 8)
             .background(
-                Capsule(style: .continuous)
-                    .fill(isSelected ? BrandPalette.goldDim : Color.clear)
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(isSelected ? BrandPalette.surfaceRaised : Color.clear)
             )
             .contentShape(Rectangle())
         }

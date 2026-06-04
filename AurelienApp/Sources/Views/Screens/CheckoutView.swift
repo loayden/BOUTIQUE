@@ -360,7 +360,7 @@ struct CheckoutView: View {
             BrandSectionHeader(
                 eyebrow: "Payment",
                 title: "Choose how you want to pay.",
-                copy: "Only payment methods that can create a real order in this build are shown. Card and Apple Pay options are hidden until a payment provider is connected."
+                copy: "Only payment methods that can complete a real physical-goods order are shown here. Cash on Delivery and Vodafone Cash are currently supported."
             )
 
             CheckoutSectionCard(title: "Payment Options", subtitle: paymentSubtitle) {
@@ -472,8 +472,8 @@ struct CheckoutView: View {
                             CheckoutSelectableCard(
                                 isSelected: true,
                                 title: "Vodafone Cash",
-                                subtitle: "Pay from an 01X mobile wallet number",
-                                detail: "01XXXXXXXXX"
+                                subtitle: "Pay from your Vodafone Cash wallet number",
+                                detail: "Use the same number linked to your Vodafone Cash wallet."
                             ) {}
                             .disabled(true)
 
@@ -487,7 +487,7 @@ struct CheckoutView: View {
                             )
 
                             if !vodafoneCashNumber.isEmpty && !vodafoneCashNumber.isValidVodafoneCashNumber {
-                                Text("Use an Egyptian mobile number in the 01X format.")
+                                Text("Use an Egyptian mobile number starting with 010, 011, 012, or 015.")
                                     .font(BrandFont.mobileCaption())
                                     .foregroundStyle(.red)
                             }
@@ -886,6 +886,13 @@ struct CheckoutView: View {
     private func placeOrder() async {
         guard let selectedAddress else {
             step = .shipping
+            return
+        }
+
+        guard store.isAuthenticated else {
+            placementErrorMessage = "Sign in before placing the order so order history, delivery updates, and support remain attached to your account."
+            store.present(.auth)
+            BrandHaptics.notificationWarning()
             return
         }
 

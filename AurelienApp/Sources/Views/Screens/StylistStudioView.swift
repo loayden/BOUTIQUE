@@ -16,7 +16,7 @@ struct StylistStudioView: View {
                 BrandSectionHeader(
                     eyebrow: "Stylist Studio",
                     title: "Smart, editorial recommendations shaped for the customer in hand.",
-                    copy: "This native studio adapts the web stylist concept into a calmer mobile flow with faster prompt selection and cleaner product follow-through."
+                    copy: "Choose a direction, generate a refined set of pieces, and move into shop without losing the editorial tone."
                 )
 
                 if isLoading {
